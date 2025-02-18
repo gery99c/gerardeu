@@ -1,19 +1,6 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist",
-        "buildCommand": "chmod +x node_modules/.bin/vite && npm run build"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/"
-    }
-  ]
+  "framework": "vite",
+  "buildCommand": "CI=false npm run build",
+  "outputDirectory": "dist"
 }
