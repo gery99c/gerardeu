@@ -444,7 +444,7 @@ function App() {
                   <span>Política de Privacidad</span>
                 </button>
                 <div className="text-gray-400">
-                  Created by GERDEU
+                  Created by GERARDEU
                 </div>
               </div>
             </div>
