@@ -5,13 +5,16 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: 'dist',
-    assetsDir: 'assets',
-    sourcemap: false,
-    minify: true,
-    target: 'es2015'
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+        }
+      }
+    }
   },
-  server: {
-    port: 3000,
-    strictPort: false
+  optimizeDeps: {
+    include: ['react', 'react-dom']
   }
 })
