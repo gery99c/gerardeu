@@ -15,23 +15,23 @@ const categories = [
 const initialMemes = [
   {
     id: 1,
-    imageUrl: 'https://i.imgur.com/DJXZ6Hk.jpeg',
-    title: '¡Cuando es viernes!',
-    category: 'funny',
+    imageUrl: 'https://picsum.photos/800/600?random=1',
+    title: 'Random Image 1',
+    category: 'random',
     likes: 42
   },
   {
     id: 2,
-    imageUrl: 'https://i.imgur.com/ZXqT96F.jpeg',
-    title: 'Programando a las 3 AM',
-    category: 'programming',
+    imageUrl: 'https://picsum.photos/800/600?random=2',
+    title: 'Random Image 2',
+    category: 'random',
     likes: 28
   },
   {
     id: 3,
-    imageUrl: 'https://i.imgur.com/8PIPrU3.jpeg',
-    title: 'Debugging be like',
-    category: 'programming',
+    imageUrl: 'https://picsum.photos/800/600?random=3',
+    title: 'Random Image 3',
+    category: 'random',
     likes: 35
   }
 ];
