@@ -1,0 +1,92 @@
+import React, { useState } from 'react';
+
+function App() {
+  const [memes, setMemes] = useState([]);
+  const [memeUrl, setMemeUrl] = useState('');
+  const [category, setCategory] = useState('');
+  const [tags, setTags] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [contactMessage, setContactMessage] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (memeUrl) {
+      setMemes([...memes, { url: memeUrl, category, tags: tags.split(',').map(tag => tag.trim()) }]);
+      setMemeUrl('');
+      setCategory('');
+      setTags('');
+    }
+  };
+
+  const handleContactSubmit = (e) => {
+    e.preventDefault();
+    alert(`Mensaje enviado: ${contactMessage}`);
+    setContactMessage('');
+  };
+
+  const filteredMemes = memes.filter(meme => 
+    meme.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    meme.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    meme.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  return (
+    <div>
+      <h1>Meme Reel</h1>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          placeholder="URL del meme"
+          value={memeUrl}
+          onChange={(e) => setMemeUrl(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Categoría"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Etiquetas (separadas por comas)"
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+        />
+        <button type="submit">Subir Meme</button>
+      </form>
+      <input
+        type="text"
+        placeholder="Buscar memes"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+      <div className="meme-gallery">
+        {filteredMemes.map((meme, index) => (
+          <div key={index} className="meme-item">
+            <img src={meme.url} alt={`Meme ${index}`} />
+            <p>Categoría: {meme.category}</p>
+            <p>Etiquetas: {meme.tags.join(', ')}</p>
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(meme.url)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Compartir en WhatsApp
+            </a>
+          </div>
+        ))}
+      </div>
+      <h2>Contacto</h2>
+      <form onSubmit={handleContactSubmit}>
+        <textarea
+          placeholder="Escribe tu mensaje aquí..."
+          value={contactMessage}
+          onChange={(e) => setContactMessage(e.target.value)}
+        />
+        <button type="submit">Enviar Mensaje</button>
+      </form>
+    </div>
+  );
+}
+
+export default App;
