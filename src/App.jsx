@@ -15,21 +15,21 @@ const categories = [
 const initialMemes = [
   {
     id: 1,
-    imageUrl: 'https://i.imgur.com/DJXZ6Hk.jpeg',
+    imageUrl: '/memes/meme1.jpg',
     title: '¡Cuando es viernes!',
     category: 'funny',
     likes: 42
   },
   {
     id: 2,
-    imageUrl: 'https://i.imgur.com/ZXqT96F.jpeg',
+    imageUrl: '/memes/meme2.jpg',
     title: 'Programando a las 3 AM',
     category: 'programming',
     likes: 28
   },
   {
     id: 3,
-    imageUrl: 'https://i.imgur.com/8PIPrU3.jpeg',
+    imageUrl: '/memes/meme3.jpg',
     title: 'Debugging be like',
     category: 'programming',
     likes: 35
@@ -72,10 +72,7 @@ const newsUpdates = [
 ];
 
 function App() {
-  const [memes, setMemes] = useState(() => {
-    const savedMemes = localStorage.getItem('memes');
-    return savedMemes ? JSON.parse(savedMemes) : initialMemes;
-  });
+  const [memes, setMemes] = useState(initialMemes);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -91,7 +88,20 @@ function App() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    localStorage.setItem('memes', JSON.stringify(memes));
+    // Only run localStorage operations on client side
+    if (typeof window !== 'undefined') {
+      const savedMemes = localStorage.getItem('memes');
+      if (savedMemes) {
+        setMemes(JSON.parse(savedMemes));
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    // Only run localStorage operations on client side
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('memes', JSON.stringify(memes));
+    }
   }, [memes]);
 
   const filteredMemes = memes.filter(meme => {
@@ -111,6 +121,10 @@ function App() {
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file && file.type.startsWith('image/')) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        alert('La imagen es demasiado grande. El tamaño máximo es 5MB.');
+        return;
+      }
       setSelectedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -125,7 +139,7 @@ function App() {
     if (selectedFile && newMemeTitle.trim() && newMemeCategory) {
       const newMeme = {
         id: Date.now(),
-        imageUrl: previewUrl,
+        imageUrl: URL.createObjectURL(selectedFile),
         title: newMemeTitle,
         category: newMemeCategory,
         likes: 0
