@@ -1,92 +1,96 @@
-import React, { useState } from 'react';
-
-function App() {
-  const [memes, setMemes] = useState([]);
-  const [memeUrl, setMemeUrl] = useState('');
-  const [category, setCategory] = useState('');
-  const [tags, setTags] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [contactMessage, setContactMessage] = useState('');
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (memeUrl) {
-      setMemes([...memes, { url: memeUrl, category, tags: tags.split(',').map(tag => tag.trim()) }]);
-      setMemeUrl('');
-      setCategory('');
-      setTags('');
-    }
-  };
-
-  const handleContactSubmit = (e) => {
-    e.preventDefault();
-    alert(`Mensaje enviado: ${contactMessage}`);
-    setContactMessage('');
-  };
-
-  const filteredMemes = memes.filter(meme => 
-    meme.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    meme.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    meme.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-
-  return (
-    <div>
-      <h1>Meme Reel</h1>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="URL del meme"
-          value={memeUrl}
-          onChange={(e) => setMemeUrl(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Categoría"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Etiquetas (separadas por comas)"
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-        />
-        <button type="submit">Subir Meme</button>
-      </form>
-      <input
-        type="text"
-        placeholder="Buscar memes"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
-      <div className="meme-gallery">
-        {filteredMemes.map((meme, index) => (
-          <div key={index} className="meme-item">
-            <img src={meme.url} alt={`Meme ${index}`} />
-            <p>Categoría: {meme.category}</p>
-            <p>Etiquetas: {meme.tags.join(', ')}</p>
-            <a
-              href={`https://wa.me/?text=${encodeURIComponent(meme.url)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Compartir en WhatsApp
-            </a>
-          </div>
-        ))}
-      </div>
-      <h2>Contacto</h2>
-      <form onSubmit={handleContactSubmit}>
-        <textarea
-          placeholder="Escribe tu mensaje aquí..."
-          value={contactMessage}
-          onChange={(e) => setContactMessage(e.target.value)}
-        />
-        <button type="submit">Enviar Mensaje</button>
-      </form>
-    </div>
-  );
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
 }
 
-export default App;
+.app-title {
+  text-align: center;
+  color: #333;
+  margin-bottom: 2rem;
+}
+
+.upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 500px;
+  margin: 0 auto 2rem;
+}
+
+.upload-form input,
+.search-input,
+.contact-form textarea {
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.upload-form button,
+.contact-form button {
+  padding: 0.8rem 1.5rem;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.upload-form button:hover,
+.contact-form button:hover {
+  background-color: #357abd;
+}
+
+.search-input {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto 2rem;
+  display: block;
+}
+
+.meme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.meme-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  padding: 1rem;
+}
+
+.meme-card img {
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.meme-card p {
+  margin: 0.5rem 0;
+  color: #666;
+}
+
+.contact-form {
+  max-width: 500px;
+  margin: 2rem auto;
+}
+
+.contact-form textarea {
+  width: 100%;
+  min-height: 150px;
+  margin-bottom: 1rem;
+  resize: vertical;
+}
+
+/* Estilos para asegurar que las animaciones sean suaves */
+* {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
