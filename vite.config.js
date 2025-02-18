@@ -7,16 +7,32 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    sourcemap: true,
+    sourcemap: false, // Disable sourcemaps in production
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
+      }
+    },
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor': ['react', 'react-dom', 'framer-motion'],
-        }
+          'vendor': ['react', 'react-dom'],
+          'animations': ['framer-motion'],
+          'icons': ['react-icons']
+        },
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]'
       }
     }
   },
   server: {
+    port: 3000,
+    strictPort: true
+  },
+  preview: {
     port: 3000,
     strictPort: true
   }

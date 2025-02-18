@@ -15,21 +15,21 @@ const categories = [
 const initialMemes = [
   {
     id: 1,
-    imageUrl: '/memes/meme1.jpg',
+    imageUrl: '/memes/default1.jpg',
     title: '¡Cuando es viernes!',
     category: 'funny',
     likes: 42
   },
   {
     id: 2,
-    imageUrl: '/memes/meme2.jpg',
+    imageUrl: '/memes/default2.jpg',
     title: 'Programando a las 3 AM',
     category: 'programming',
     likes: 28
   },
   {
     id: 3,
-    imageUrl: '/memes/meme3.jpg',
+    imageUrl: '/memes/default3.jpg',
     title: 'Debugging be like',
     category: 'programming',
     likes: 35
@@ -85,20 +85,42 @@ function App() {
   const [newMemeCategory, setNewMemeCategory] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    // Only run localStorage operations on client side
-    if (typeof window !== 'undefined') {
-      const savedMemes = localStorage.getItem('memes');
-      if (savedMemes) {
-        setMemes(JSON.parse(savedMemes));
+    const loadSavedMemes = async () => {
+      try {
+        setIsLoading(true);
+        if (typeof window !== 'undefined') {
+          const savedMemes = localStorage.getItem('memes');
+          if (savedMemes) {
+            const parsedMemes = JSON.parse(savedMemes);
+            const validMemes = parsedMemes.filter(meme => 
+              meme && 
+              typeof meme.id === 'number' && 
+              typeof meme.imageUrl === 'string' &&
+              typeof meme.title === 'string' &&
+              typeof meme.category === 'string' &&
+              typeof meme.likes === 'number'
+            );
+            setMemes(validMemes.length > 0 ? validMemes : initialMemes);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading memes:', err);
+        setError('Error loading memes. Using default memes.');
+        setMemes(initialMemes);
+      } finally {
+        setIsLoading(false);
       }
-    }
+    };
+
+    loadSavedMemes();
   }, []);
 
   useEffect(() => {
-    // Only run localStorage operations on client side
     if (typeof window !== 'undefined') {
       localStorage.setItem('memes', JSON.stringify(memes));
     }
@@ -118,21 +140,76 @@ function App() {
     }
   }, [filteredMemes, currentIndex]);
 
-  const handleFileSelect = (event) => {
+  const handleFileSelect = async (event) => {
     const file = event.target.files[0];
     if (file && file.type.startsWith('image/')) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        alert('La imagen es demasiado grande. El tamaño máximo es 5MB.');
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        alert('La imagen es demasiado grande. El tamaño máximo es 2MB.');
         return;
       }
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
-      setShowUploadModal(true);
+
+      try {
+        const compressedImage = await compressImage(file);
+        setSelectedFile(compressedImage);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviewUrl(reader.result);
+        };
+        reader.readAsDataURL(compressedImage);
+        setShowUploadModal(true);
+      } catch (err) {
+        console.error('Error processing image:', err);
+        alert('Error al procesar la imagen. Por favor, intenta con otra imagen.');
+      }
     }
+  };
+
+  const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          let width = img.width;
+          let height = img.height;
+          const maxDimension = 1024;
+          
+          if (width > height && width > maxDimension) {
+            height = (height * maxDimension) / width;
+            width = maxDimension;
+          } else if (height > maxDimension) {
+            width = (width * maxDimension) / height;
+            height = maxDimension;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(new File([blob], file.name, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                }));
+              } else {
+                reject(new Error('Image compression failed'));
+              }
+            },
+            'image/jpeg',
+            0.8
+          );
+        };
+        img.onerror = reject;
+        img.src = event.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleUploadMeme = () => {
@@ -188,7 +265,6 @@ function App() {
     });
   };
 
-  // Variantes de animación
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
