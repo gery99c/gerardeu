@@ -4,19 +4,13 @@ function MemeGenerator() {
   // ... existing code ...
 
   const handleSaveMeme = async () => {
-    // Primer console.log para verificar que la función se ejecuta
-    console.log('Botón clickeado')
-    
     try {
-      alert('Iniciando guardado...') // Agregamos un alert para verificar
-      console.log('Iniciando guardado del meme...')
-      
-      // 1. Obtener el canvas y verificar que existe
+      // Obtener el canvas
       const canvas = document.querySelector('canvas')
       if (!canvas) {
-        throw new Error('No se encontró el canvas')
+        alert('Por favor, genera un meme primero')
+        return
       }
-      alert('Canvas encontrado') // Otro alert de verificación
 
       // Convertir el canvas a blob
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
@@ -59,9 +53,15 @@ function MemeGenerator() {
       alert('¡Meme guardado con éxito!')
 
     } catch (error) {
-      console.error('Error completo:', error)
-      alert('Error: ' + error.message)
+      console.error('Error:', error)
+      alert('Error al procesar el meme')
     }
+  }
+
+  // Función simple de prueba
+  const testConsole = () => {
+    console.log('TEST: Botón clickeado')
+    alert('TEST: Botón clickeado')
   }
 
   return (
@@ -69,14 +69,8 @@ function MemeGenerator() {
       {/* ... existing code ... */}
       <div className="buttons">
         <button onClick={generateMeme}>Generar Meme</button>
-        <button 
-          onClick={() => {
-            console.log('Click en botón guardar')
-            handleSaveMeme()
-          }}
-        >
-          Guardar Meme
-        </button>
+        <button onClick={handleSaveMeme}>Guardar Meme</button>
+        <button onClick={testConsole}>TEST CONSOLE</button>
       </div>
       {/* ... existing code ... */}
     </div>
