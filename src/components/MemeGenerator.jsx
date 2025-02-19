@@ -4,7 +4,11 @@ function MemeGenerator() {
   // ... existing code ...
 
   const handleSaveMeme = async () => {
+    // Primer console.log para verificar que la función se ejecuta
+    console.log('Botón clickeado')
+    
     try {
+      alert('Iniciando guardado...') // Agregamos un alert para verificar
       console.log('Iniciando guardado del meme...')
       
       // 1. Obtener el canvas y verificar que existe
@@ -12,49 +16,30 @@ function MemeGenerator() {
       if (!canvas) {
         throw new Error('No se encontró el canvas')
       }
-      console.log('Canvas encontrado')
+      alert('Canvas encontrado') // Otro alert de verificación
 
-      // 2. Convertir canvas a Blob
-      const blob = await new Promise((resolve, reject) => {
-        try {
-          canvas.toBlob((blob) => {
-            if (blob) {
-              resolve(blob)
-            } else {
-              reject(new Error('Error al crear blob'))
-            }
-          }, 'image/png')
-        } catch (error) {
-          reject(error)
-        }
-      })
-      console.log('Blob creado:', blob.size, 'bytes')
-
-      // 3. Subir a Supabase Storage
+      // Convertir el canvas a blob
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
       const fileName = `meme_${Date.now()}.png`
-      console.log('Intentando subir:', fileName)
 
+      // Subir la imagen a Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('memes')
-        .upload(fileName, blob, {
-          contentType: 'image/png',
-          upsert: false
-        })
+        .upload(fileName, blob)
 
       if (uploadError) {
-        throw new Error(`Error al subir: ${uploadError.message}`)
+        console.error('Error al subir:', uploadError)
+        alert('Error al subir la imagen')
+        return
       }
-      console.log('Archivo subido exitosamente:', uploadData)
 
-      // 4. Obtener URL pública
+      // Obtener la URL pública
       const { data: { publicUrl } } = supabase.storage
         .from('memes')
         .getPublicUrl(fileName)
-      
-      console.log('URL pública generada:', publicUrl)
 
-      // 5. Guardar en la base de datos
-      const { data: dbData, error: dbError } = await supabase
+      // Guardar en la base de datos
+      const { data, error } = await supabase
         .from('memes')
         .insert([
           {
@@ -64,18 +49,18 @@ function MemeGenerator() {
             template_name: meme?.name || 'custom'
           }
         ])
-        .select()
 
-      if (dbError) {
-        throw new Error(`Error en base de datos: ${dbError.message}`)
+      if (error) {
+        console.error('Error al guardar:', error)
+        alert('Error al guardar el meme')
+        return
       }
-      console.log('Meme guardado en la base de datos:', dbData)
 
       alert('¡Meme guardado con éxito!')
 
     } catch (error) {
       console.error('Error completo:', error)
-      alert(error.message)
+      alert('Error: ' + error.message)
     }
   }
 
@@ -84,7 +69,14 @@ function MemeGenerator() {
       {/* ... existing code ... */}
       <div className="buttons">
         <button onClick={generateMeme}>Generar Meme</button>
-        <button onClick={handleSaveMeme}>Guardar Meme</button>
+        <button 
+          onClick={() => {
+            console.log('Click en botón guardar')
+            handleSaveMeme()
+          }}
+        >
+          Guardar Meme
+        </button>
       </div>
       {/* ... existing code ... */}
     </div>
