@@ -13,7 +13,7 @@ async function getMemes() {
 
   return data;
 }
-
+// hola
 // Función para agregar un nuevo meme
 async function addMeme(meme) {
   const { data, error } = await supabase
