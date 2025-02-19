@@ -6,7 +6,7 @@ function MemeGenerator() {
   const handleSaveMeme = async () => {
     try {
       // Obtener el canvas
-      const canvas = document.querySelector('canvas')
+      const canvas = document.querySelector('.meme canvas')
       if (!canvas) {
         alert('Por favor, genera un meme primero')
         return
@@ -16,18 +16,20 @@ function MemeGenerator() {
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
       const fileName = `meme_${Date.now()}.png`
 
-      // Subir la imagen a Supabase Storage
+      // Subir a Supabase
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('memes')
-        .upload(fileName, blob)
+        .upload(fileName, blob, {
+          contentType: 'image/png'
+        })
 
       if (uploadError) {
-        console.error('Error al subir:', uploadError)
         alert('Error al subir la imagen')
+        console.error(uploadError)
         return
       }
 
-      // Obtener la URL pública
+      // Obtener URL pública
       const { data: { publicUrl } } = supabase.storage
         .from('memes')
         .getPublicUrl(fileName)
@@ -45,23 +47,17 @@ function MemeGenerator() {
         ])
 
       if (error) {
-        console.error('Error al guardar:', error)
-        alert('Error al guardar el meme')
+        alert('Error al guardar en la base de datos')
+        console.error(error)
         return
       }
 
       alert('¡Meme guardado con éxito!')
 
     } catch (error) {
-      console.error('Error:', error)
-      alert('Error al procesar el meme')
+      alert('Error al guardar el meme')
+      console.error(error)
     }
-  }
-
-  // Función simple de prueba
-  const testConsole = () => {
-    console.log('TEST: Botón clickeado')
-    alert('TEST: Botón clickeado')
   }
 
   return (
@@ -70,7 +66,6 @@ function MemeGenerator() {
       <div className="buttons">
         <button onClick={generateMeme}>Generar Meme</button>
         <button onClick={handleSaveMeme}>Guardar Meme</button>
-        <button onClick={testConsole}>TEST CONSOLE</button>
       </div>
       {/* ... existing code ... */}
     </div>
