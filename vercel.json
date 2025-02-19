@@ -1,12 +1,6 @@
 {
-<<<<<<< HEAD
   "version": 2,
   "framework": "vite",
   "buildCommand": "CI=false npm run build",
   "outputDirectory": "dist"
-=======
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
->>>>>>> c0b236e159522ae4d5dff579c3cf4b6bc0aaa15d
 }

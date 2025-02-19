@@ -1,9 +1,20 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaHeart, FaShare, FaArrowUp, FaArrowDown, FaHome, FaSearch, 
+         FaHandsHelping, FaUpload, FaTimes, FaFolder, FaInfoCircle, FaShieldAlt,
+         FaBullhorn, FaTwitter, FaInstagram, FaGithub, FaDiscord } from 'react-icons/fa';
 
-const memes = [
+const categories = [
+  { id: 'funny', name: 'Divertidos' },
+  { id: 'programming', name: 'Programación' },
+  { id: 'gaming', name: 'Gaming' },
+  { id: 'animals', name: 'Animales' },
+  { id: 'random', name: 'Random' }
+];
+
+const initialMemes = [
   {
     id: 1,
-<<<<<<< HEAD
     imageUrl: 'https://picsum.photos/800/600?random=1',
     title: 'Random Image 1',
     category: 'random',
@@ -22,38 +33,184 @@ const memes = [
     title: 'Random Image 3',
     category: 'random',
     likes: 35
-=======
-    title: 'First Meme',
-    url: 'https://picsum.photos/400/300?random=1'
+  }
+];
+
+const newsUpdates = [
+  {
+    id: 1,
+    date: '2024-02-15',
+    title: '¡Grandes novedades en camino!',
+    author: 'Equipo JoyFinder',
+    content: 'Estamos trabajando en una nueva versión que incluirá perfiles de usuario y colecciones personalizadas. ¡Mantente atento!',
+    tag: 'Actualización'
   },
   {
     id: 2,
-    title: 'Second Meme',
-    url: 'https://picsum.photos/400/300?random=2'
+    date: '2024-02-10',
+    title: 'Modo Oscuro en Desarrollo',
+    author: 'Equipo de Diseño',
+    content: 'El modo oscuro está casi listo. Hemos estado trabajando en asegurar que la experiencia visual sea perfecta en ambos modos.',
+    tag: 'En Desarrollo'
   },
   {
     id: 3,
-    title: 'Third Meme',
-    url: 'https://picsum.photos/400/300?random=3'
->>>>>>> c0b236e159522ae4d5dff579c3cf4b6bc0aaa15d
+    date: '2024-02-05',
+    title: 'Mejoras en el Rendimiento',
+    author: 'Equipo Técnico',
+    content: 'Hemos optimizado el rendimiento de la aplicación. Ahora la carga de memes es un 50% más rápida.',
+    tag: 'Mejora'
+  },
+  {
+    id: 4,
+    date: '2024-02-01',
+    title: 'Creador de Memes',
+    author: 'Equipo de Producto',
+    content: 'Estamos desarrollando un creador de memes integrado que te permitirá crear contenido directamente en la plataforma.',
+    tag: 'Próximamente'
   }
-]
+];
 
 function App() {
-  const [currentIndex, setCurrentIndex] = useState(0)
+  const [memes, setMemes] = useState(() => {
+    const savedMemes = localStorage.getItem('memes');
+    return savedMemes ? JSON.parse(savedMemes) : initialMemes;
+  });
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showNewsModal, setShowNewsModal] = useState(false);
+  const [showCollaborateModal, setShowCollaborateModal] = useState(false);
+  const [newMemeTitle, setNewMemeTitle] = useState('');
+  const [newMemeCategory, setNewMemeCategory] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const fileInputRef = useRef(null);
 
-  const handleNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % memes.length)
-  }
+  useEffect(() => {
+    localStorage.setItem('memes', JSON.stringify(memes));
+  }, [memes]);
 
-  const handlePrev = () => {
-    setCurrentIndex((prev) => (prev - 1 + memes.length) % memes.length)
-  }
+  const filteredMemes = memes.filter(meme => {
+    const matchesSearch = meme.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || meme.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
-  const currentMeme = memes[currentIndex]
+  useEffect(() => {
+    if (filteredMemes.length === 0) {
+      setCurrentIndex(0);
+    } else if (currentIndex >= filteredMemes.length) {
+      setCurrentIndex(filteredMemes.length - 1);
+    }
+  }, [filteredMemes, currentIndex]);
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+      setShowUploadModal(true);
+    }
+  };
+
+  const handleUploadMeme = () => {
+    if (selectedFile && newMemeTitle.trim() && newMemeCategory) {
+      const newMeme = {
+        id: Date.now(),
+        imageUrl: previewUrl,
+        title: newMemeTitle,
+        category: newMemeCategory,
+        likes: 0
+      };
+      const newMemes = [...memes, newMeme];
+      setMemes(newMemes);
+      setShowUploadModal(false);
+      setNewMemeTitle('');
+      setNewMemeCategory('');
+      setSelectedFile(null);
+      setPreviewUrl('');
+      if (selectedCategory === 'all' || selectedCategory === newMemeCategory) {
+        setCurrentIndex(newMemes.length - 1);
+      }
+    }
+  };
+
+  const handleLike = (id) => {
+    setMemes(memes.map(meme => 
+      meme.id === id ? { ...meme, likes: meme.likes + 1 } : meme
+    ));
+  };
+
+  const nextMeme = () => {
+    if (currentIndex < filteredMemes.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    }
+  };
+
+  const previousMeme = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+    }
+  };
+
+  const handleCategoryChange = (category) => {
+    setSelectedCategory(category);
+    setCurrentIndex(0);
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  // Variantes de animación
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        duration: 0.5,
+        when: "beforeChildren",
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { type: "spring", stiffness: 300, damping: 24 }
+    }
+  };
+
+  const modalVariants = {
+    hidden: { scale: 0.8, opacity: 0 },
+    visible: { 
+      scale: 1, 
+      opacity: 1,
+      transition: { type: "spring", stiffness: 500, damping: 25 }
+    },
+    exit: { 
+      scale: 0.8, 
+      opacity: 0,
+      transition: { duration: 0.2 }
+    }
+  };
 
   return (
-<<<<<<< HEAD
     <motion.div
       initial="hidden"
       animate="visible"
@@ -615,36 +772,9 @@ function App() {
             </AnimatePresence>
           </motion.div>
         </div>
-=======
-    <div style={{ maxWidth: '600px', margin: '0 auto', padding: '20px', textAlign: 'center' }}>
-      <h1 style={{ marginBottom: '20px' }}>Meme Viewer</h1>
-      
-      <div style={{ marginBottom: '20px', border: '1px solid #ddd', borderRadius: '8px', padding: '10px' }}>
-        <h2 style={{ marginBottom: '10px' }}>{currentMeme.title}</h2>
-        <img 
-          src={currentMeme.url} 
-          alt={currentMeme.title}
-          style={{ maxWidth: '100%', height: 'auto', borderRadius: '4px' }}
-        />
->>>>>>> c0b236e159522ae4d5dff579c3cf4b6bc0aaa15d
       </div>
-
-      <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-        <button 
-          onClick={handlePrev}
-          style={{ padding: '8px 16px', backgroundColor: '#f0f0f0', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-        >
-          Previous
-        </button>
-        <button 
-          onClick={handleNext}
-          style={{ padding: '8px 16px', backgroundColor: '#f0f0f0', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-        >
-          Next
-        </button>
-      </div>
-    </div>
-  )
+    </motion.div>
+  );
 }
 
-export default App
+export default App;
