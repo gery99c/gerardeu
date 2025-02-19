@@ -28,12 +28,39 @@ async function addMeme(meme) {
   return data;
 }
 
+// Función para subir una foto
+async function uploadPhoto(file) {
+  const fileName = `${Date.now()}_${file.name}`;
+  const { data, error } = await supabase
+    .storage
+    .from('memes')
+    .upload(fileName, file);
+
+  if (error) {
+    console.error('Error uploading photo:', error);
+    return null;
+  }
+
+  const url = `${supabase.storage.from('memes').getPublicUrl(fileName).publicURL}`;
+  return url;
+}
+
+// Función para agregar un nuevo meme con foto
+async function addMemeWithPhoto(title, file) {
+  const photoUrl = await uploadPhoto(file);
+  if (!photoUrl) return null;
+
+  const newMeme = { title, url: photoUrl };
+  return await addMeme(newMeme);
+}
+
 // Ejemplo de uso
 (async () => {
   const memes = await getMemes();
   console.log('Memes:', memes);
 
-  const newMeme = { title: 'Nuevo Meme', url: 'https://example.com/meme.jpg' };
-  const addedMeme = await addMeme(newMeme);
+  // Ejemplo de agregar un nuevo meme con foto
+  const file = new File([''], 'example.jpg'); // Reemplaza con el archivo real
+  const addedMeme = await addMemeWithPhoto('Nuevo Meme', file);
   console.log('Added Meme:', addedMeme);
 })();
