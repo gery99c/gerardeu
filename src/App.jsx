@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaHeart, FaShare, FaArrowUp, FaArrowDown, FaHome, FaSearch, 
          FaHandsHelping, FaUpload, FaTimes, FaFolder, FaInfoCircle, FaShieldAlt,
          FaBullhorn, FaTwitter, FaInstagram, FaGithub, FaDiscord } from 'react-icons/fa';
+import { supabase } from './lib/supabase';
 
 const categories = [
   { id: 'funny', name: 'Divertidos' },
@@ -12,70 +13,19 @@ const categories = [
   { id: 'random', name: 'Random' }
 ];
 
-const initialMemes = [
-  {
-    id: 1,
-    imageUrl: 'https://picsum.photos/800/600?random=1',
-    title: 'Random Image 1',
-    category: 'random',
-    likes: 42
-  },
-  {
-    id: 2,
-    imageUrl: 'https://picsum.photos/800/600?random=2',
-    title: 'Random Image 2',
-    category: 'random',
-    likes: 28
-  },
-  {
-    id: 3,
-    imageUrl: 'https://picsum.photos/800/600?random=3',
-    title: 'Random Image 3',
-    category: 'random',
-    likes: 35
-  }
-];
-
 const newsUpdates = [
   {
     id: 1,
-    date: '2024-02-15',
-    title: '¡Grandes novedades en camino!',
-    author: 'Equipo JoyFinder',
-    content: 'Estamos trabajando en una nueva versión que incluirá perfiles de usuario y colecciones personalizadas. ¡Mantente atento!',
-    tag: 'Actualización'
-  },
-  {
-    id: 2,
-    date: '2024-02-10',
-    title: 'Modo Oscuro en Desarrollo',
-    author: 'Equipo de Diseño',
-    content: 'El modo oscuro está casi listo. Hemos estado trabajando en asegurar que la experiencia visual sea perfecta en ambos modos.',
-    tag: 'En Desarrollo'
-  },
-  {
-    id: 3,
-    date: '2024-02-05',
-    title: 'Mejoras en el Rendimiento',
-    author: 'Equipo Técnico',
-    content: 'Hemos optimizado el rendimiento de la aplicación. Ahora la carga de memes es un 50% más rápida.',
-    tag: 'Mejora'
-  },
-  {
-    id: 4,
-    date: '2024-02-01',
-    title: 'Creador de Memes',
-    author: 'Equipo de Producto',
-    content: 'Estamos desarrollando un creador de memes integrado que te permitirá crear contenido directamente en la plataforma.',
-    tag: 'Próximamente'
+    title: "¡Bienvenidos a JoyFinder!",
+    author: "Equipo JoyFinder",
+    date: "2025-02-19",
+    tag: "Actualización",
+    content: "Lanzamos oficialmente JoyFinder, tu nueva plataforma para compartir y disfrutar de memes."
   }
 ];
 
 function App() {
-  const [memes, setMemes] = useState(() => {
-    const savedMemes = localStorage.getItem('memes');
-    return savedMemes ? JSON.parse(savedMemes) : initialMemes;
-  });
+  const [memes, setMemes] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -87,67 +37,108 @@ function App() {
   const [newMemeTitle, setNewMemeTitle] = useState('');
   const [newMemeCategory, setNewMemeCategory] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    localStorage.setItem('memes', JSON.stringify(memes));
-  }, [memes]);
+    fetchMemes();
+  }, [selectedCategory, searchTerm]);
 
-  const filteredMemes = memes.filter(meme => {
-    const matchesSearch = meme.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || meme.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  async function fetchMemes() {
+    try {
+      let query = supabase.from('memes').select('*').order('created_at', { ascending: false });
+      
+      if (selectedCategory !== 'all') {
+        query = query.eq('category', selectedCategory);
+      }
+      
+      if (searchTerm) {
+        query = query.ilike('title', `%${searchTerm}%`);
+      }
 
-  useEffect(() => {
-    if (filteredMemes.length === 0) {
-      setCurrentIndex(0);
-    } else if (currentIndex >= filteredMemes.length) {
-      setCurrentIndex(filteredMemes.length - 1);
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      setMemes(data || []);
+    } catch (error) {
+      console.error('Error fetching memes:', error);
     }
-  }, [filteredMemes, currentIndex]);
+  }
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file && file.type.startsWith('image/')) {
       setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
       setShowUploadModal(true);
     }
   };
 
-  const handleUploadMeme = () => {
-    if (selectedFile && newMemeTitle.trim() && newMemeCategory) {
-      const newMeme = {
-        id: Date.now(),
-        imageUrl: previewUrl,
-        title: newMemeTitle,
-        category: newMemeCategory,
-        likes: 0
-      };
-      const newMemes = [...memes, newMeme];
-      setMemes(newMemes);
+  const handleUploadMeme = async () => {
+    if (!selectedFile || !newMemeTitle.trim() || !newMemeCategory) return;
+
+    try {
+      setUploading(true);
+
+      // Upload image to Supabase Storage
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('memes')
+        .upload(filePath, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL for the uploaded image
+      const { data: { publicUrl } } = supabase.storage
+        .from('memes')
+        .getPublicUrl(filePath);
+
+      // Create meme record in the database
+      const { error: insertError } = await supabase
+        .from('memes')
+        .insert([
+          {
+            title: newMemeTitle,
+            image_url: publicUrl,
+            category: newMemeCategory,
+            likes: 0
+          }
+        ]);
+
+      if (insertError) throw insertError;
+
+      // Reset form and fetch updated memes
       setShowUploadModal(false);
       setNewMemeTitle('');
       setNewMemeCategory('');
       setSelectedFile(null);
-      setPreviewUrl('');
-      if (selectedCategory === 'all' || selectedCategory === newMemeCategory) {
-        setCurrentIndex(newMemes.length - 1);
-      }
+      await fetchMemes();
+      
+    } catch (error) {
+      console.error('Error uploading meme:', error);
+    } finally {
+      setUploading(false);
     }
   };
 
-  const handleLike = (id) => {
-    setMemes(memes.map(meme => 
-      meme.id === id ? { ...meme, likes: meme.likes + 1 } : meme
-    ));
+  const handleLike = async (id) => {
+    try {
+      const meme = memes.find(m => m.id === id);
+      const { error } = await supabase
+        .from('memes')
+        .update({ likes: (meme.likes || 0) + 1 })
+        .eq('id', id);
+
+      if (error) throw error;
+      await fetchMemes();
+    } catch (error) {
+      console.error('Error updating likes:', error);
+    }
   };
+
+  const filteredMemes = memes;
 
   const nextMeme = () => {
     if (currentIndex < filteredMemes.length - 1) {
@@ -174,60 +165,12 @@ function App() {
     });
   };
 
-  // Variantes de animación
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        duration: 0.5,
-        when: "beforeChildren",
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { 
-      y: 0, 
-      opacity: 1,
-      transition: { type: "spring", stiffness: 300, damping: 24 }
-    }
-  };
-
-  const modalVariants = {
-    hidden: { scale: 0.8, opacity: 0 },
-    visible: { 
-      scale: 1, 
-      opacity: 1,
-      transition: { type: "spring", stiffness: 500, damping: 25 }
-    },
-    exit: { 
-      scale: 0.8, 
-      opacity: 0,
-      transition: { duration: 0.2 }
-    }
-  };
-
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-      className="min-h-screen bg-gray-100"
-    >
+    <div className="min-h-screen bg-gray-900">
       <nav className="bg-black shadow-lg fixed w-full z-10">
-        <motion.div 
-          className="max-w-6xl mx-auto px-4 py-3"
-          variants={itemVariants}
-        >
+        <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <motion.div 
-              className="flex items-center space-x-4"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
+            <div className="flex items-center space-x-8">
               <div className="flex items-center">
                 <button className="text-white text-2xl mr-2">
                   <FaHome />
@@ -247,28 +190,21 @@ function App() {
                   <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 </div>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div 
-              className="flex items-center space-x-6"
-              variants={itemVariants}
-            >
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="text-white hover:text-blue-400 transition-colors"
+            <div className="flex items-center space-x-4">
+              <button 
                 onClick={() => setShowNewsModal(true)}
+                className="text-white hover:text-blue-400 transition-colors"
               >
                 <FaBullhorn className="text-xl" />
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="text-white hover:text-blue-400 transition-colors"
+              </button>
+              <button 
                 onClick={() => setShowCollaborateModal(true)}
+                className="text-white hover:text-blue-400 transition-colors"
               >
                 <FaHandsHelping className="text-xl" />
-              </motion.button>
+              </button>
               <input
                 type="file"
                 ref={fileInputRef}
@@ -276,58 +212,50 @@ function App() {
                 accept="image/*"
                 className="hidden"
               />
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+              <button 
                 onClick={() => fileInputRef.current.click()}
+                className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
               >
                 <FaUpload />
                 <span>Subir Meme</span>
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="text-white hover:text-blue-400 transition-colors"
+              </button>
+              <button 
                 onClick={() => setShowAboutModal(true)}
+                className="text-white hover:text-blue-400 transition-colors"
               >
                 <FaInfoCircle className="text-xl" />
-              </motion.button>
-            </motion.div>
+              </button>
+            </div>
           </div>
-        </motion.div>
+        </div>
 
         <div className="border-t border-gray-800">
           <div className="max-w-6xl mx-auto px-4">
             <div className="flex space-x-8">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <button
+                onClick={() => handleCategoryChange('all')}
                 className={`py-3 flex items-center space-x-2 ${
                   selectedCategory === 'all'
                     ? 'text-blue-400 border-b-2 border-blue-400'
                     : 'text-gray-400 hover:text-white'
                 }`}
-                onClick={() => handleCategoryChange('all')}
               >
                 <FaFolder />
                 <span>Todos</span>
-              </motion.button>
+              </button>
               {categories.map(category => (
-                <motion.button
+                <button
                   key={category.id}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleCategoryChange(category.id)}
                   className={`py-3 flex items-center space-x-2 ${
                     selectedCategory === category.id
                       ? 'text-blue-400 border-b-2 border-blue-400'
                       : 'text-gray-400 hover:text-white'
                   }`}
-                  onClick={() => handleCategoryChange(category.id)}
                 >
                   <FaFolder />
                   <span>{category.name}</span>
-                </motion.button>
+                </button>
               ))}
             </div>
           </div>
@@ -336,13 +264,7 @@ function App() {
 
       {showUploadModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            variants={modalVariants}
-            className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4"
-          >
+          <div className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">Subir nuevo meme</h3>
               <button 
@@ -353,10 +275,10 @@ function App() {
               </button>
             </div>
             
-            {previewUrl && (
+            {selectedFile && (
               <div className="mb-4 rounded-lg overflow-hidden">
                 <img 
-                  src={previewUrl} 
+                  src={URL.createObjectURL(selectedFile)} 
                   alt="Preview" 
                   className="w-full object-contain max-h-64"
                 />
@@ -393,25 +315,19 @@ function App() {
               </button>
               <button
                 onClick={handleUploadMeme}
-                disabled={!newMemeTitle.trim() || !selectedFile || !newMemeCategory}
+                disabled={!newMemeTitle.trim() || !selectedFile || !newMemeCategory || uploading}
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
               >
-                Publicar
+                {uploading ? 'Subiendo...' : 'Publicar'}
               </button>
             </div>
-          </motion.div>
+          </div>
         </div>
       )}
 
       {showAboutModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            variants={modalVariants}
-            className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4"
-          >
+          <div className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">Sobre JoyFinder</h3>
               <button 
@@ -444,23 +360,17 @@ function App() {
                   <span>Política de Privacidad</span>
                 </button>
                 <div className="text-gray-400">
-                  Created by GERARDEU
+                  Created by GERDEU
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       )}
 
       {showPrivacyModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            variants={modalVariants}
-            className="bg-gray-800 p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"
-          >
+          <div className="bg-gray-800 p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">Política de Privacidad</h3>
               <button 
@@ -543,19 +453,13 @@ function App() {
                 Última actualización: {new Date().toLocaleDateString()}
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       )}
 
       {showNewsModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            variants={modalVariants}
-            className="bg-gray-800 p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"
-          >
+          <div className="bg-gray-800 p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-2xl font-bold text-white">Novedades de la Comunidad</h3>
@@ -608,19 +512,13 @@ function App() {
                 </div>
               ))}
             </div>
-          </motion.div>
+          </div>
         </div>
       )}
 
       {showCollaborateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            variants={modalVariants}
-            className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4"
-          >
+          <div className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">Colabora con Nosotros</h3>
               <button 
@@ -688,92 +586,88 @@ function App() {
                 </p>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       )}
 
-      <div className="pt-16 min-h-screen bg-gray-900">
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <motion.div 
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-            variants={itemVariants}
-          >
-            <AnimatePresence mode="wait">
-              {filteredMemes.map(meme => (
+      <div className="pt-28 flex items-center justify-center">
+        {filteredMemes.length > 0 ? (
+          <div className="max-w-md w-full">
+            <div className="relative bg-black rounded-xl overflow-hidden aspect-[9/16] shadow-xl">
+              <AnimatePresence mode="wait">
                 <motion.div
-                  key={meme.id}
-                  layout
+                  key={currentIndex}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  whileHover={{ 
-                    y: -5, 
-                    transition: { duration: 0.2 }
-                  }}
-                  className="bg-gray-800 rounded-xl overflow-hidden shadow-lg"
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="relative w-full h-full"
                 >
-                  <motion.div className="relative">
-                    <motion.img
-                      src={meme.imageUrl}
-                      alt={meme.title}
-                      className="w-full h-48 object-cover"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.2 }}
-                    />
-                    <motion.div 
-                      className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 }}
-                    >
-                      <h3 className="text-white text-lg font-semibold">{meme.title}</h3>
-                    </motion.div>
-                  </motion.div>
-
-                  <motion.div 
-                    className="p-4"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                  >
+                  <img 
+                    src={filteredMemes[currentIndex]?.image_url}
+                    alt={filteredMemes[currentIndex]?.title}
+                    className="w-full h-full object-contain"
+                  />
+                  
+                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                    <h2 className="text-white text-lg font-semibold mb-2">
+                      {filteredMemes[currentIndex]?.title}
+                    </h2>
+                    
                     <div className="flex justify-between items-center">
-                      <motion.span 
-                        className="text-blue-400 text-sm"
-                        whileHover={{ scale: 1.1 }}
-                      >
-                        {meme.category}
-                      </motion.span>
-                      <motion.div 
-                        className="flex items-center space-x-4"
-                        variants={itemVariants}
-                      >
-                        <motion.button
-                          whileHover={{ scale: 1.2 }}
-                          whileTap={{ scale: 0.9 }}
-                          className="text-red-500 hover:text-red-600"
-                          onClick={() => handleLike(meme.id)}
+                      <div className="flex gap-4">
+                        <button 
+                          onClick={() => handleLike(filteredMemes[currentIndex]?.id)}
+                          className="text-white flex items-center gap-2"
                         >
-                          <FaHeart />
-                          <span className="ml-1">{meme.likes}</span>
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.2 }}
-                          whileTap={{ scale: 0.9 }}
-                          className="text-blue-400 hover:text-blue-500"
-                          onClick={() => handleShare(meme.imageUrl)}
-                        >
-                          <FaShare />
-                        </motion.button>
-                      </motion.div>
+                          <FaHeart className="text-2xl hover:text-red-500 transition-colors" />
+                          <span>{filteredMemes[currentIndex]?.likes}</span>
+                        </button>
+                        <button className="text-white">
+                          <FaShare className="text-2xl hover:text-green-400 transition-colors" />
+                        </button>
+                      </div>
                     </div>
-                  </motion.div>
+                  </div>
                 </motion.div>
+              </AnimatePresence>
+
+              <button 
+                onClick={previousMeme}
+                disabled={currentIndex === 0}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-white p-2 rounded-full bg-black/50 disabled:opacity-50"
+              >
+                <FaArrowUp className="text-2xl" />
+              </button>
+              
+              <button 
+                onClick={nextMeme}
+                disabled={currentIndex === filteredMemes.length - 1}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white p-2 rounded-full bg-black/50 disabled:opacity-50"
+              >
+                <FaArrowDown className="text-2xl" />
+              </button>
+            </div>
+
+            <div className="mt-4 flex justify-center gap-2">
+              {filteredMemes.map((_, idx) => (
+                <div 
+                  key={idx}
+                  className={`h-1 w-8 rounded-full ${
+                    idx === currentIndex ? 'bg-white' : 'bg-gray-600'
+                  }`}
+                />
               ))}
-            </AnimatePresence>
-          </motion.div>
-        </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-white text-center">
+            <h2 className="text-3xl font-bold mb-2">No hay memes</h2>
+            <p className="text-lg">No se encontraron memes para esta categoría o búsqueda.</p>
+          </div>
+        )}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
