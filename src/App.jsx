@@ -208,6 +208,9 @@ function App() {
       const fileExt = file.name.split('.').pop();
       const fileName = `meme_${Date.now()}.${fileExt}`;
 
+      console.log('Subiendo archivo:', fileName);
+
+      // Subir archivo a Supabase Storage
       const { data, error } = await supabase.storage
         .from('joy-images')
         .upload(fileName, file, {
@@ -217,34 +220,33 @@ function App() {
 
       if (error) throw error;
 
+      // Obtener URL pública
       const { data: { publicUrl } } = supabase.storage
         .from('joy-images')
         .getPublicUrl(fileName);
 
-      // Guardar en la base de datos con categoría y contadores
-      const { error: dbError } = await supabase
-        .from('joy_images')
-        .insert([
-          {
-            url: publicUrl,
-            name: fileName,
-            category: selectedCategory,
-            likes: 0,
-            shares: 0,
-            created_at: new Date().toISOString()
-          }
-        ]);
+      console.log('URL pública:', publicUrl);
 
-      if (dbError) throw dbError;
+      // Crear nuevo meme
+      const newMeme = {
+        id: Date.now(),
+        imageUrl: publicUrl,
+        title: `Meme ${memes.length + 1}`,
+        category: selectedCategory,
+        likes: 0
+      };
 
-      console.log('Meme subido:', publicUrl);
-      setSelectedCategory('');
+      // Actualizar estado local
+      setMemes(prevMemes => [newMeme, ...prevMemes]);
+
+      console.log('Meme añadido:', newMeme);
 
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error al subir:', error);
       alert('Error al subir el meme: ' + error.message);
     } finally {
       setUploading(false);
+      // Limpiar input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -311,19 +313,25 @@ function App() {
                 <FaHandsHelping className="text-xl" />
               </motion.button>
               <input
-                ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                ref={fileInputRef}
                 onChange={handleFileSelected}
-                style={{ display: 'none' }}
+                accept="image/*"
+                className="hidden"
               />
-              <button
-                className="upload-button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+                onClick={handleUploadClick}
               >
-                {uploading ? 'Subiendo...' : 'Subir Meme'}
-              </button>
+                <span className="upload-icon">
+                  {uploading ? '📤' : '⬆️'}
+                </span>
+                <span className="upload-text">
+                  {uploading ? 'Subiendo...' : 'Subir Meme'}
+                </span>
+              </motion.button>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
