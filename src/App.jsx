@@ -4,6 +4,7 @@ import { FaHeart, FaShare, FaArrowUp, FaArrowDown, FaHome, FaSearch,
          FaHandsHelping, FaUpload, FaTimes, FaFolder, FaInfoCircle, FaShieldAlt,
          FaBullhorn, FaTwitter, FaInstagram, FaGithub, FaDiscord } from 'react-icons/fa';
 import TestUpload from './components/TestUpload'
+import S3Upload from './components/S3Upload'
 
 const categories = [
   { id: 'funny', name: 'Divertidos' },
@@ -776,6 +777,7 @@ function App() {
       </div>
 
       <TestUpload />
+      <S3Upload />
     </motion.div>
   );
 }
