@@ -19,30 +19,6 @@ const categories = [
   { id: 'random', name: 'Random' }
 ];
 
-const initialMemes = [
-  {
-    id: 1,
-    imageUrl: 'https://picsum.photos/800/600?random=1',
-    title: 'Random Image 1',
-    category: 'random',
-    likes: 42
-  },
-  {
-    id: 2,
-    imageUrl: 'https://picsum.photos/800/600?random=2',
-    title: 'Random Image 2',
-    category: 'random',
-    likes: 28
-  },
-  {
-    id: 3,
-    imageUrl: 'https://picsum.photos/800/600?random=3',
-    title: 'Random Image 3',
-    category: 'random',
-    likes: 35
-  }
-];
-
 const newsUpdates = [
   {
     id: 1,
@@ -79,10 +55,7 @@ const newsUpdates = [
 ];
 
 function App() {
-  const [memes, setMemes] = useState(() => {
-    const savedMemes = localStorage.getItem('memes');
-    return savedMemes ? JSON.parse(savedMemes) : initialMemes;
-  });
+  const [memes, setMemes] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -99,8 +72,31 @@ function App() {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('memes', JSON.stringify(memes));
-  }, [memes]);
+    loadMemes();
+  }, []);
+
+  const loadMemes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('joy_images')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const dbMemes = data.map(item => ({
+        id: item.id,
+        imageUrl: item.url,
+        title: item.name.split('_')[1]?.split('.')[0] || 'Meme',
+        category: item.category || 'random',
+        likes: item.likes || 0
+      }));
+
+      setMemes(dbMemes);
+    } catch (error) {
+      console.error('Error cargando memes:', error);
+    }
+  };
 
   const filteredMemes = memes.filter(meme => {
     const matchesSearch = meme.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -232,28 +228,22 @@ function App() {
       const file = event.target.files?.[0];
       if (!file) return;
 
-      // 1. Primero, subir el archivo a Storage
       const fileExt = file.name.split('.').pop();
       const fileName = `meme_${Date.now()}.${fileExt}`;
-      
-      console.log('1. Iniciando subida a Storage:', fileName);
 
+      // 1. Subir a Storage
       const { data: storageData, error: storageError } = await supabase.storage
         .from('joy-images')
         .upload(fileName, file);
 
       if (storageError) throw storageError;
 
-      console.log('2. Archivo subido a Storage:', storageData);
-
-      // 2. Obtener la URL pública
+      // 2. Obtener URL pública
       const { data: { publicUrl } } = supabase.storage
         .from('joy-images')
         .getPublicUrl(fileName);
 
-      console.log('3. URL pública obtenida:', publicUrl);
-
-      // 3. Insertar en la base de datos
+      // 3. Guardar en la base de datos
       const { data: dbData, error: dbError } = await supabase
         .from('joy_images')
         .insert({
@@ -267,57 +257,17 @@ function App() {
 
       if (dbError) throw dbError;
 
-      console.log('4. Guardado en base de datos:', dbData);
-
-      // 4. Actualizar la UI
-      const newMeme = {
-        id: Date.now(), // ID temporal
-        imageUrl: publicUrl,
-        title: `Meme ${Date.now()}`,
-        category: selectedCategory,
-        likes: 0
-      };
-
-      setMemes(prevMemes => [newMeme, ...prevMemes]);
-      
-      // 5. Recargar todos los memes
-      loadMemes();
-
-      alert('¡Meme subido con éxito!');
+      // 4. Recargar los memes
+      await loadMemes();
 
     } catch (error) {
-      console.error('Error completo:', error);
-      alert('Error: ' + error.message);
+      console.error('Error:', error);
+      alert('Error al subir el meme: ' + error.message);
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    }
-  };
-
-  const loadMemes = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('joy_images')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      console.log('Memes cargados:', data);
-      
-      const dbMemes = data.map(item => ({
-        id: item.id,
-        imageUrl: item.url,
-        title: `Meme ${item.id}`,
-        category: item.category || 'random',
-        likes: item.likes || 0
-      }));
-
-      setMemes([...dbMemes, ...initialMemes]);
-    } catch (error) {
-      console.error('Error cargando memes:', error);
     }
   };
 
