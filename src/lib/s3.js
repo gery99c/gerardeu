@@ -1,9 +1,8 @@
 import { S3Client } from '@aws-sdk/client-s3'
 
-// Configuración correcta de tu proyecto
-const SUPABASE_PROJECT_ID = 'ybytyrxlktjmbqxunrhw'
+// ID correcto del proyecto
+const SUPABASE_PROJECT_ID = 'rrclsnobkthwwvnfxyuf'
 const SUPABASE_BUCKET = 'joy-images'
-const SUPABASE_TABLE = 'joy_images' // Referencia a tu tabla en la base de datos
 
 const s3Client = new S3Client({
   endpoint: `https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/s3`,
@@ -16,4 +15,4 @@ const s3Client = new S3Client({
   signatureVersion: 'v4'
 })
 
-export { s3Client, SUPABASE_PROJECT_ID, SUPABASE_BUCKET, SUPABASE_TABLE } 
+export { s3Client, SUPABASE_PROJECT_ID, SUPABASE_BUCKET } 

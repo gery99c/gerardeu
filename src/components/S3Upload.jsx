@@ -1,17 +1,13 @@
 import { useState } from 'react'
-import { Upload } from '@aws-sdk/lib-storage'
-import { s3Client, SUPABASE_PROJECT_ID, SUPABASE_BUCKET, SUPABASE_TABLE } from '../lib/s3'
-import { supabase } from '../supabase' // Asegúrate de tener este import
+import { PutObjectCommand } from '@aws-sdk/client-s3'
+import { s3Client, SUPABASE_PROJECT_ID, SUPABASE_BUCKET } from '../lib/s3'
 
 function S3Upload() {
   const [uploading, setUploading] = useState(false)
-  const [progress, setProgress] = useState(0)
 
   const handleUpload = async (event) => {
     try {
       setUploading(true)
-      setProgress(0)
-      
       const file = event.target.files[0]
       if (!file) return
 
@@ -24,49 +20,23 @@ function S3Upload() {
         projectId: SUPABASE_PROJECT_ID
       })
 
-      // 1. Subir archivo a S3
-      const parallelUploads3 = new Upload({
-        client: s3Client,
-        params: {
-          Bucket: SUPABASE_BUCKET,
-          Key: fileName,
-          Body: file,
-          ContentType: file.type,
-          ACL: 'public-read'
-        },
-        queueSize: 4,
-        partSize: 1024 * 1024 * 5
+      const command = new PutObjectCommand({
+        Bucket: SUPABASE_BUCKET,
+        Key: fileName,
+        Body: file,
+        ContentType: file.type,
+        ACL: 'public-read'
       })
 
-      parallelUploads3.on('httpUploadProgress', (progress) => {
-        const percentage = Math.round((progress.loaded / progress.total) * 100)
-        setProgress(percentage)
-        console.log(`Progreso: ${percentage}%`)
-      })
+      const response = await s3Client.send(command)
+      console.log('Respuesta:', response)
 
-      await parallelUploads3.done()
-      
-      // Generar URL pública
       const publicUrl = `https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/${SUPABASE_BUCKET}/${fileName}`
-      
-      // 2. Guardar referencia en la base de datos
-      const { data, error } = await supabase
-        .from(SUPABASE_TABLE)
-        .insert([
-          {
-            url: publicUrl,
-            name: fileName,
-            created_at: new Date().toISOString()
-          }
-        ])
-
-      if (error) throw error
-
-      console.log('Archivo subido y guardado en BD:', data)
+      console.log('URL pública:', publicUrl)
       alert('¡Subida exitosa!\nURL: ' + publicUrl)
 
     } catch (error) {
-      console.error('Error en la subida:', error)
+      console.error('Error detallado:', error)
       alert('Error: ' + error.message)
     } finally {
       setUploading(false)
@@ -75,35 +45,20 @@ function S3Upload() {
 
   return (
     <div style={{ padding: '20px' }}>
-      <h2>Subir Imagen (S3)</h2>
-      <div style={{ marginBottom: '20px' }}>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleUpload}
-          disabled={uploading}
-          style={{ marginBottom: '10px' }}
-        />
-        {uploading && (
-          <div>
-            <p>Subiendo... {progress}%</p>
-            <div style={{
-              width: '100%',
-              height: '20px',
-              backgroundColor: '#f0f0f0',
-              borderRadius: '10px',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                width: `${progress}%`,
-                height: '100%',
-                backgroundColor: '#4CAF50',
-                transition: 'width 0.3s ease-in-out'
-              }} />
-            </div>
-          </div>
-        )}
+      <h2>Subir Imagen</h2>
+      <div style={{ marginBottom: '10px' }}>
+        <code>
+          Bucket: {SUPABASE_BUCKET}<br/>
+          Project: {SUPABASE_PROJECT_ID}
+        </code>
       </div>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleUpload}
+        disabled={uploading}
+      />
+      {uploading && <p>Subiendo...</p>}
     </div>
   )
 }
