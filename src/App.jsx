@@ -5,7 +5,6 @@ import { FaHeart, FaShare, FaArrowUp, FaArrowDown, FaHome, FaSearch,
          FaBullhorn, FaTwitter, FaInstagram, FaGithub, FaDiscord } from 'react-icons/fa';
 import TestUpload from './components/TestUpload'
 import { createClient } from '@supabase/supabase-js'
-import MemeGrid from './components/MemeGrid'
 
 const supabase = createClient(
   'https://ybytyrxlktjmbqxunrhw.supabase.co',
@@ -848,8 +847,6 @@ function App() {
       </div>
 
       <TestUpload />
-
-      <MemeGrid />
     </motion.div>
   );
 }
