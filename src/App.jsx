@@ -232,69 +232,92 @@ function App() {
       const file = event.target.files?.[0];
       if (!file) return;
 
+      // 1. Primero, subir el archivo a Storage
       const fileExt = file.name.split('.').pop();
       const fileName = `meme_${Date.now()}.${fileExt}`;
+      
+      console.log('1. Iniciando subida a Storage:', fileName);
 
-      console.log('Iniciando subida:', fileName);
-
-      // 1. Subir archivo a Storage
       const { data: storageData, error: storageError } = await supabase.storage
         .from('joy-images')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
+        .upload(fileName, file);
 
       if (storageError) throw storageError;
 
-      console.log('Archivo subido a storage:', storageData);
+      console.log('2. Archivo subido a Storage:', storageData);
 
-      // 2. Obtener URL pública
+      // 2. Obtener la URL pública
       const { data: { publicUrl } } = supabase.storage
         .from('joy-images')
         .getPublicUrl(fileName);
 
-      console.log('URL pública:', publicUrl);
+      console.log('3. URL pública obtenida:', publicUrl);
 
-      // 3. Guardar en la base de datos
+      // 3. Insertar en la base de datos
       const { data: dbData, error: dbError } = await supabase
         .from('joy_images')
-        .insert([
-          {
-            url: publicUrl,
-            name: fileName,
-            category: selectedCategory,
-            likes: 0,
-            created_at: new Date().toISOString()
-          }
-        ])
+        .insert({
+          url: publicUrl,
+          name: fileName,
+          category: selectedCategory,
+          likes: 0,
+          created_at: new Date().toISOString()
+        })
         .select();
 
       if (dbError) throw dbError;
 
-      console.log('Guardado en base de datos:', dbData);
+      console.log('4. Guardado en base de datos:', dbData);
 
-      // 4. Actualizar estado local
+      // 4. Actualizar la UI
       const newMeme = {
-        id: dbData[0].id,
+        id: Date.now(), // ID temporal
         imageUrl: publicUrl,
-        title: fileName.split('_')[1]?.split('.')[0] || 'Meme',
+        title: `Meme ${Date.now()}`,
         category: selectedCategory,
         likes: 0
       };
 
       setMemes(prevMemes => [newMeme, ...prevMemes]);
+      
+      // 5. Recargar todos los memes
+      loadMemes();
 
-      console.log('Meme añadido exitosamente');
+      alert('¡Meme subido con éxito!');
 
     } catch (error) {
       console.error('Error completo:', error);
-      alert('Error al subir el meme: ' + error.message);
+      alert('Error: ' + error.message);
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+    }
+  };
+
+  const loadMemes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('joy_images')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      console.log('Memes cargados:', data);
+      
+      const dbMemes = data.map(item => ({
+        id: item.id,
+        imageUrl: item.url,
+        title: `Meme ${item.id}`,
+        category: item.category || 'random',
+        likes: item.likes || 0
+      }));
+
+      setMemes([...dbMemes, ...initialMemes]);
+    } catch (error) {
+      console.error('Error cargando memes:', error);
     }
   };
 
