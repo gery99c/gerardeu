@@ -1,28 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
+// Crear cliente con el proyecto correcto
 const supabase = createClient(
-  'https://rrclsnobkthwwvnfxyuf.supabase.co',
+  'https://ybytyrxlktjmbqxunrhw.supabase.co',  // URL del proyecto correcto
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyY2xzbm9ia3Rod3d2bmZ4eXVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAzOTQzOTQsImV4cCI6MjA1NTk3MDM5NH0.R4SdQ_5UZC8aerokqKiauDrWYELq5Q_UywLo-dlb3CU'
 )
 
 function S3Upload() {
   const [uploading, setUploading] = useState(false)
-  const [buckets, setBuckets] = useState([])
-
-  useEffect(() => {
-    // Listar buckets disponibles al cargar
-    async function listBuckets() {
-      const { data, error } = await supabase.storage.listBuckets()
-      if (error) {
-        console.error('Error al listar buckets:', error)
-      } else {
-        console.log('Buckets disponibles:', data)
-        setBuckets(data || [])
-      }
-    }
-    listBuckets()
-  }, [])
 
   const handleUpload = async (event) => {
     try {
@@ -30,39 +16,53 @@ function S3Upload() {
       const file = event.target.files[0]
       if (!file) return
 
-      // Primero, listar buckets para verificar
-      const { data: bucketsData, error: bucketsError } = await supabase.storage.listBuckets()
-      console.log('Buckets actuales:', bucketsData)
-
-      if (bucketsError) {
-        throw new Error('Error al listar buckets: ' + bucketsError.message)
-      }
-
       const fileExt = file.name.split('.').pop()
       const fileName = `upload_${Date.now()}.${fileExt}`
 
-      // Usar el primer bucket disponible
-      const bucketName = bucketsData[0]?.name
-      if (!bucketName) {
-        throw new Error('No hay buckets disponibles')
-      }
+      console.log('Iniciando subida:', {
+        bucket: 'joy-images',
+        fileName,
+        fileSize: file.size
+      })
 
-      console.log('Intentando subir a bucket:', bucketName)
-
+      // Subir archivo
       const { data, error } = await supabase.storage
-        .from(bucketName)
+        .from('joy-images')
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: false
         })
 
-      if (error) throw error
+      if (error) {
+        console.error('Error de subida:', error)
+        throw error
+      }
 
+      console.log('Archivo subido:', data)
+
+      // Obtener URL pública
       const { data: { publicUrl } } = supabase.storage
-        .from(bucketName)
+        .from('joy-images')
         .getPublicUrl(fileName)
 
       console.log('URL pública:', publicUrl)
+
+      // Guardar referencia en la base de datos
+      const { data: dbData, error: dbError } = await supabase
+        .from('joy_images')
+        .insert([
+          {
+            url: publicUrl,
+            name: fileName,
+            created_at: new Date().toISOString()
+          }
+        ])
+
+      if (dbError) {
+        console.error('Error al guardar en BD:', dbError)
+        throw dbError
+      }
+
       alert('¡Subida exitosa!\nURL: ' + publicUrl)
 
     } catch (error) {
@@ -76,18 +76,12 @@ function S3Upload() {
   return (
     <div style={{ padding: '20px' }}>
       <h2>Subir Imagen</h2>
-      <div style={{ marginBottom: '20px' }}>
-        <h3>Buckets disponibles:</h3>
-        <ul>
-          {buckets.map(bucket => (
-            <li key={bucket.id}>
-              {bucket.name} {bucket.public ? '(público)' : '(privado)'}
-            </li>
-          ))}
-        </ul>
-        {buckets.length === 0 && (
-          <p style={{ color: 'red' }}>No hay buckets disponibles</p>
-        )}
+      <div style={{ marginBottom: '10px', backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '5px' }}>
+        <pre style={{ margin: 0, fontSize: '14px' }}>
+          Proyecto: ybytyrxlktjmbqxunrhw
+          Bucket: joy-images
+          Tabla: joy_images
+        </pre>
       </div>
       <input
         type="file"
@@ -96,7 +90,16 @@ function S3Upload() {
         disabled={uploading}
         style={{ marginBottom: '10px' }}
       />
-      {uploading && <p>Subiendo...</p>}
+      {uploading && (
+        <div style={{ 
+          padding: '10px',
+          backgroundColor: '#e8f5e9',
+          borderRadius: '5px',
+          marginTop: '10px'
+        }}>
+          <p style={{ margin: 0 }}>Subiendo archivo...</p>
+        </div>
+      )}
     </div>
   )
 }
