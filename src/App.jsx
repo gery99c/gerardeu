@@ -4,7 +4,12 @@ import { FaHeart, FaShare, FaArrowUp, FaArrowDown, FaHome, FaSearch,
          FaHandsHelping, FaUpload, FaTimes, FaFolder, FaInfoCircle, FaShieldAlt,
          FaBullhorn, FaTwitter, FaInstagram, FaGithub, FaDiscord } from 'react-icons/fa';
 import TestUpload from './components/TestUpload'
-import S3Upload from './components/S3Upload'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  'https://ybytyrxlktjmbqxunrhw.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlieXR5cnhsa3RqbWJxeHVucmh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk5NTY0NjcsImV4cCI6MjA1NTUzMjQ2N30.Sjec8zFzC8xlLdAoSekkbZG5x93suFMc91CUYY-YRhc'
+)
 
 const categories = [
   { id: 'funny', name: 'Divertidos' },
@@ -91,6 +96,7 @@ function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const fileInputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('memes', JSON.stringify(memes));
@@ -212,6 +218,66 @@ function App() {
     }
   };
 
+  const handleUploadClick = () => {
+    if (!selectedCategory) {
+      alert('Por favor, selecciona una categoría');
+      return;
+    }
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = async (event) => {
+    try {
+      setUploading(true);
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `meme_${Date.now()}.${fileExt}`;
+
+      const { data, error } = await supabase.storage
+        .from('joy-images')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('joy-images')
+        .getPublicUrl(fileName);
+
+      // Guardar en la base de datos con categoría y contadores
+      const { error: dbError } = await supabase
+        .from('joy_images')
+        .insert([
+          {
+            url: publicUrl,
+            name: fileName,
+            category: selectedCategory,
+            likes: 0,
+            shares: 0,
+            created_at: new Date().toISOString()
+          }
+        ]);
+
+      if (dbError) throw dbError;
+
+      console.log('Meme subido:', publicUrl);
+      setSelectedCategory('');
+
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al subir el meme: ' + error.message);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   return (
     <motion.div
       initial="hidden"
@@ -274,7 +340,7 @@ function App() {
               <input
                 type="file"
                 ref={fileInputRef}
-                onChange={handleFileSelect}
+                onChange={handleFileSelected}
                 accept="image/*"
                 className="hidden"
               />
@@ -282,10 +348,14 @@ function App() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-                onClick={() => fileInputRef.current.click()}
+                onClick={handleUploadClick}
               >
-                <FaUpload />
-                <span>Subir Meme</span>
+                <span className="upload-icon">
+                  {uploading ? '📤' : '⬆️'}
+                </span>
+                <span className="upload-text">
+                  {uploading ? 'Subiendo...' : 'Subir Meme'}
+                </span>
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -777,7 +847,6 @@ function App() {
       </div>
 
       <TestUpload />
-      <S3Upload />
     </motion.div>
   );
 }
