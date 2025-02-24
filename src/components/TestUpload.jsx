@@ -34,27 +34,7 @@ function TestUpload() {
         .getPublicUrl(fileName)
 
       console.log('URL pública generada:', publicUrl)
-
-      // Guardar en la base de datos
-      const { data, error } = await supabase
-        .from('joy_images')
-        .insert([
-          {
-            title: 'Imagen de prueba',
-            image_url: publicUrl,
-            description: 'Esta es una imagen de prueba',
-            category: 'test'
-          }
-        ])
-        .select()
-
-      if (error) {
-        console.error('Error al guardar en base de datos:', error)
-        throw error
-      }
-
-      console.log('Datos guardados en la base de datos:', data)
-      alert('¡Imagen subida con éxito!')
+      alert('¡Imagen subida con éxito! URL: ' + publicUrl)
 
     } catch (error) {
       console.error('Error completo:', error)
