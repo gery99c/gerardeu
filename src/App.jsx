@@ -235,6 +235,8 @@ function App() {
       const fileExt = file.name.split('.').pop();
       const fileName = `meme_${Date.now()}.${fileExt}`;
 
+      console.log('Subiendo archivo:', fileName);
+
       const { data, error } = await supabase.storage
         .from('joy-images')
         .upload(fileName, file, {
@@ -248,27 +250,23 @@ function App() {
         .from('joy-images')
         .getPublicUrl(fileName);
 
-      // Guardar en la base de datos con categoría y contadores
-      const { error: dbError } = await supabase
-        .from('joy_images')
-        .insert([
-          {
-            url: publicUrl,
-            name: fileName,
-            category: selectedCategory,
-            likes: 0,
-            shares: 0,
-            created_at: new Date().toISOString()
-          }
-        ]);
+      console.log('URL pública:', publicUrl);
 
-      if (dbError) throw dbError;
+      const newMeme = {
+        id: Date.now(),
+        imageUrl: publicUrl,
+        title: `Meme ${memes.length + 1}`,
+        category: selectedCategory,
+        likes: 0
+      };
 
-      console.log('Meme subido:', publicUrl);
-      setSelectedCategory('');
+      const newMemes = [newMeme, ...memes];
+      setMemes(newMemes);
+
+      console.log('Meme añadido:', newMeme);
 
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error al subir:', error);
       alert('Error al subir el meme: ' + error.message);
     } finally {
       setUploading(false);
@@ -349,6 +347,7 @@ function App() {
                 whileTap={{ scale: 0.95 }}
                 className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
                 onClick={handleUploadClick}
+                disabled={uploading}
               >
                 <span className="upload-icon">
                   {uploading ? '📤' : '⬆️'}
