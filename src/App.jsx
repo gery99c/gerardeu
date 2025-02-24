@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaHeart, FaShare, FaArrowUp, FaArrowDown, FaHome, FaSearch, 
          FaHandsHelping, FaUpload, FaTimes, FaFolder, FaInfoCircle, FaShieldAlt,
          FaBullhorn, FaTwitter, FaInstagram, FaGithub, FaDiscord } from 'react-icons/fa';
+import ImageUploader from './components/ImageUploader'
 
 const categories = [
   { id: 'funny', name: 'Divertidos' },
@@ -773,6 +774,7 @@ function App() {
           </motion.div>
         </div>
       </div>
+      <ImageUploader />
     </motion.div>
   );
 }
