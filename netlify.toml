@@ -1,1 +1,24 @@
- 
+-- Crear la tabla para el proyecto joyfinder
+CREATE TABLE IF NOT EXISTS joy_images (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    title TEXT,
+    image_url TEXT,
+    description TEXT,
+    category TEXT,
+    likes INTEGER DEFAULT 0
+);
+
+-- Habilitar RLS
+ALTER TABLE joy_images ENABLE ROW LEVEL SECURITY;
+
+-- Crear políticas de acceso
+CREATE POLICY "Permitir lectura pública"
+ON joy_images FOR SELECT
+TO public
+USING (true);
+
+CREATE POLICY "Permitir inserción pública"
+ON joy_images FOR INSERT
+TO public
+WITH CHECK (true); 

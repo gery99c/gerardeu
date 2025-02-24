@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../supabase'
 
-function ImageUploader() {
+function TestUpload() {
   const [uploading, setUploading] = useState(false)
 
   const handleUpload = async (event) => {
@@ -12,40 +12,53 @@ function ImageUploader() {
 
       // Crear nombre único para el archivo
       const fileExt = file.name.split('.').pop()
-      const fileName = `${Math.random()}.${fileExt}`
+      const fileName = `test_${Date.now()}.${fileExt}`
+
+      console.log('Iniciando subida de archivo:', fileName)
 
       // Subir a Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('joy-images')
         .upload(fileName, file)
 
-      if (uploadError) throw uploadError
+      if (uploadError) {
+        console.error('Error al subir a storage:', uploadError)
+        throw uploadError
+      }
+
+      console.log('Archivo subido correctamente:', uploadData)
 
       // Obtener URL pública
       const { data: { publicUrl } } = supabase.storage
         .from('joy-images')
         .getPublicUrl(fileName)
 
+      console.log('URL pública generada:', publicUrl)
+
       // Guardar en la base de datos
       const { data, error } = await supabase
         .from('joy_images')
         .insert([
           {
-            title: file.name,
+            title: 'Imagen de prueba',
             image_url: publicUrl,
-            description: 'Imagen de prueba',
+            description: 'Esta es una imagen de prueba',
             category: 'test'
           }
         ])
+        .select()
 
-      if (error) throw error
+      if (error) {
+        console.error('Error al guardar en base de datos:', error)
+        throw error
+      }
 
+      console.log('Datos guardados en la base de datos:', data)
       alert('¡Imagen subida con éxito!')
-      console.log('URL de la imagen:', publicUrl)
 
     } catch (error) {
-      console.error('Error:', error)
-      alert('Error al subir la imagen: ' + error.message)
+      console.error('Error completo:', error)
+      alert('Error: ' + error.message)
     } finally {
       setUploading(false)
     }
@@ -53,17 +66,17 @@ function ImageUploader() {
 
   return (
     <div style={{ padding: '20px' }}>
-      <h2>Subir Imagen a JoyFinder</h2>
+      <h2>Test de Subida de Imagen</h2>
       <input
         type="file"
         accept="image/*"
         onChange={handleUpload}
         disabled={uploading}
-        style={{ marginBottom: '10px', display: 'block' }}
+        style={{ marginBottom: '10px' }}
       />
       {uploading && <p>Subiendo...</p>}
     </div>
   )
 }
 
-export default ImageUploader 
+export default TestUpload 
