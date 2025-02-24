@@ -1,8 +1,23 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 
 function TestUpload() {
   const [uploading, setUploading] = useState(false)
+  const [buckets, setBuckets] = useState([])
+
+  useEffect(() => {
+    // Listar buckets al cargar el componente
+    async function listBuckets() {
+      const { data, error } = await supabase.storage.listBuckets()
+      if (error) {
+        console.error('Error al listar buckets:', error)
+      } else {
+        console.log('Buckets disponibles:', data)
+        setBuckets(data || [])
+      }
+    }
+    listBuckets()
+  }, [])
 
   const handleUpload = async (event) => {
     try {
@@ -14,19 +29,12 @@ function TestUpload() {
       const fileExt = file.name.split('.').pop()
       const fileName = `test_${Date.now()}.${fileExt}`
 
-      console.log('Iniciando subida de archivo:', fileName)
-      console.log('Bucket name:', 'joy-images') // Para verificar el nombre del bucket
-
-      // Listar buckets disponibles
-      const { data: buckets, error: bucketsError } = await supabase
-        .storage
-        .listBuckets()
-      
       console.log('Buckets disponibles:', buckets)
+      console.log('Intentando subir a bucket: joy-images')
 
       // Subir a Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('joy-images') // Asegúrate de que este nombre coincida exactamente
+        .from('joy-images')
         .upload(fileName, file)
 
       if (uploadError) {
@@ -55,6 +63,16 @@ function TestUpload() {
   return (
     <div style={{ padding: '20px' }}>
       <h2>Test de Subida de Imagen</h2>
+      
+      <div style={{ marginBottom: '20px' }}>
+        <h3>Buckets disponibles:</h3>
+        <ul>
+          {buckets.map(bucket => (
+            <li key={bucket.id}>{bucket.name} - {bucket.id}</li>
+          ))}
+        </ul>
+      </div>
+
       <input
         type="file"
         accept="image/*"
