@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-// Crear cliente con el proyecto correcto
+// Configuración correcta del cliente de Supabase
 const supabase = createClient(
-  'https://ybytyrxlktjmbqxunrhw.supabase.co',  // URL del proyecto correcto
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyY2xzbm9ia3Rod3d2bmZ4eXVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAzOTQzOTQsImV4cCI6MjA1NTk3MDM5NH0.R4SdQ_5UZC8aerokqKiauDrWYELq5Q_UywLo-dlb3CU'
+  'https://ybytyrxlktjmbqxunrhw.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlieXR5cnhsa3RqbWJxeHVucmh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk5NTY0NjcsImV4cCI6MjA1NTUzMjQ2N30.Sjec8zFzC8xlLdAoSekkbZG5x93suFMc91CUYY-YRhc'
 )
 
 function S3Upload() {
