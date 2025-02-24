@@ -11,15 +11,12 @@ function MemeGrid() {
 
   useEffect(() => {
     loadMemes()
-    // Suscribirse a cambios en la tabla
     const subscription = supabase
       .channel('joy_images_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'joy_images' }, loadMemes)
       .subscribe()
 
-    return () => {
-      subscription.unsubscribe()
-    }
+    return () => subscription.unsubscribe()
   }, [])
 
   const loadMemes = async () => {
@@ -42,13 +39,10 @@ function MemeGrid() {
       .update({ likes: currentLikes + 1 })
       .eq('id', memeId)
 
-    if (error) {
-      console.error('Error al dar like:', error)
-    }
+    if (error) console.error('Error al dar like:', error)
   }
 
   const handleShare = async (memeId, currentShares, memeUrl) => {
-    // Intentar usar Web Share API si está disponible
     if (navigator.share) {
       try {
         await navigator.share({
@@ -57,7 +51,6 @@ function MemeGrid() {
           url: memeUrl
         })
         
-        // Actualizar contador de shares
         const { error } = await supabase
           .from('joy_images')
           .update({ shares: currentShares + 1 })
@@ -68,31 +61,34 @@ function MemeGrid() {
         console.error('Error al compartir:', error)
       }
     } else {
-      // Fallback: copiar al portapapeles
       navigator.clipboard.writeText(memeUrl)
       alert('¡URL copiada al portapapeles!')
     }
   }
 
   return (
-    <div className="meme-grid">
-      {memes.map(meme => (
+    <div className="meme-container">
+      {memes.map((meme, index) => (
         <div key={meme.id} className="meme-card">
-          <img src={meme.url} alt={meme.name} className="meme-image" />
-          <div className="meme-info">
-            <span className="meme-category">{meme.category}</span>
-            <div className="meme-actions">
+          <div className="meme-image-container">
+            <img src={meme.url} alt={meme.name} className="meme-image" />
+            <div className="meme-title">Meme {index + 1}</div>
+          </div>
+          <div className="meme-footer">
+            <span className="category-tag">{meme.category}</span>
+            <div className="action-buttons">
               <button 
+                className="action-button like-button" 
                 onClick={() => handleLike(meme.id, meme.likes)}
-                className="action-button like-button"
               >
-                👍 {meme.likes}
+                <span className="heart-icon">❤️</span>
+                <span className="count">{meme.likes || 0}</span>
               </button>
               <button 
-                onClick={() => handleShare(meme.id, meme.shares, meme.url)}
                 className="action-button share-button"
+                onClick={() => handleShare(meme.id, meme.shares, meme.url)}
               >
-                📤 {meme.shares}
+                <span className="share-icon">↗️</span>
               </button>
             </div>
           </div>
@@ -100,72 +96,85 @@ function MemeGrid() {
       ))}
 
       <style>{`
-        .meme-grid {
+        .meme-container {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
           gap: 20px;
           padding: 20px;
+          background-color: #1a1f2e;
         }
 
         .meme-card {
-          background: white;
-          border-radius: 12px;
+          position: relative;
+          border-radius: 10px;
           overflow: hidden;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          background: #2a2f3e;
           transition: transform 0.2s;
         }
 
         .meme-card:hover {
-          transform: translateY(-4px);
+          transform: translateY(-5px);
+        }
+
+        .meme-image-container {
+          position: relative;
+          width: 100%;
+          padding-top: 75%; /* 4:3 Aspect Ratio */
         }
 
         .meme-image {
+          position: absolute;
+          top: 0;
+          left: 0;
           width: 100%;
-          height: auto;
+          height: 100%;
           object-fit: cover;
         }
 
-        .meme-info {
-          padding: 12px;
+        .meme-title {
+          position: absolute;
+          top: 10px;
+          left: 10px;
+          color: white;
+          font-size: 1.2em;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .meme-footer {
+          padding: 10px;
           display: flex;
           justify-content: space-between;
           align-items: center;
+          background: rgba(0,0,0,0.5);
         }
 
-        .meme-category {
-          background: #f0f0f0;
-          padding: 4px 8px;
-          border-radius: 12px;
-          font-size: 14px;
+        .category-tag {
+          color: #4a90e2;
+          font-size: 0.9em;
         }
 
-        .meme-actions {
+        .action-buttons {
           display: flex;
-          gap: 8px;
+          gap: 10px;
         }
 
         .action-button {
           background: none;
           border: none;
-          padding: 8px;
+          color: white;
           cursor: pointer;
-          border-radius: 8px;
-          transition: background-color 0.2s;
           display: flex;
           align-items: center;
-          gap: 4px;
+          gap: 5px;
+          padding: 5px;
         }
 
-        .action-button:hover {
-          background-color: #f0f0f0;
+        .like-button .count {
+          color: #ff4757;
         }
 
-        .like-button {
-          color: #4a90e2;
-        }
-
-        .share-button {
-          color: #43a047;
+        .heart-icon, .share-icon {
+          font-size: 1.2em;
         }
       `}</style>
     </div>
