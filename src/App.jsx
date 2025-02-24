@@ -72,11 +72,30 @@ function App() {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('memes', JSON.stringify(memes));
-  }, [memes]);
+    loadMemes();
+  }, []);
+
+  const loadMemes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('joy_images')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error al cargar memes:', error);
+        return;
+      }
+
+      console.log('Memes cargados:', data);
+      setMemes(data || []);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
 
   const filteredMemes = memes.filter(meme => {
-    const matchesSearch = meme.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = meme.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || meme.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -205,48 +224,45 @@ function App() {
       const file = event.target.files?.[0];
       if (!file) return;
 
+      // 1. Subir archivo a Storage
       const fileExt = file.name.split('.').pop();
       const fileName = `meme_${Date.now()}.${fileExt}`;
 
-      console.log('Subiendo archivo:', fileName);
-
-      // Subir archivo a Supabase Storage
-      const { data, error } = await supabase.storage
+      const { error: storageError } = await supabase.storage
         .from('joy-images')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
+        .upload(fileName, file);
 
-      if (error) throw error;
+      if (storageError) throw storageError;
 
-      // Obtener URL pública
+      // 2. Obtener URL pública
       const { data: { publicUrl } } = supabase.storage
         .from('joy-images')
         .getPublicUrl(fileName);
 
-      console.log('URL pública:', publicUrl);
+      // 3. Guardar en la tabla joy_images
+      const { error: dbError } = await supabase
+        .from('joy_images')
+        .insert([
+          {
+            url: publicUrl,
+            name: fileName,
+            category: selectedCategory,
+            likes: 0,
+            shares: 0,
+            created_at: new Date().toISOString()
+          }
+        ]);
 
-      // Crear nuevo meme
-      const newMeme = {
-        id: Date.now(),
-        imageUrl: publicUrl,
-        title: `Meme ${memes.length + 1}`,
-        category: selectedCategory,
-        likes: 0
-      };
+      if (dbError) throw dbError;
 
-      // Actualizar estado local
-      setMemes(prevMemes => [newMeme, ...prevMemes]);
-
-      console.log('Meme añadido:', newMeme);
+      // 4. Recargar memes
+      await loadMemes();
 
     } catch (error) {
       console.error('Error al subir:', error);
       alert('Error al subir el meme: ' + error.message);
     } finally {
       setUploading(false);
-      // Limpiar input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -761,8 +777,8 @@ function App() {
                 >
                   <motion.div className="relative">
                     <motion.img
-                      src={meme.imageUrl}
-                      alt={meme.title}
+                      src={meme.url}
+                      alt={meme.name}
                       className="w-full h-48 object-cover"
                       whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.2 }}
@@ -773,7 +789,7 @@ function App() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.1 }}
                     >
-                      <h3 className="text-white text-lg font-semibold">{meme.title}</h3>
+                      <h3 className="text-white text-lg font-semibold">{meme.name.split('_')[1]?.split('.')[0] || 'Meme'}</h3>
                     </motion.div>
                   </motion.div>
 
@@ -801,13 +817,13 @@ function App() {
                           onClick={() => handleLike(meme.id)}
                         >
                           <FaHeart />
-                          <span className="ml-1">{meme.likes}</span>
+                          <span className="ml-1">{meme.likes || 0}</span>
                         </motion.button>
                         <motion.button
                           whileHover={{ scale: 1.2 }}
                           whileTap={{ scale: 0.9 }}
                           className="text-blue-400 hover:text-blue-500"
-                          onClick={() => handleShare(meme.imageUrl)}
+                          onClick={() => handleShare(meme.url)}
                         >
                           <FaShare />
                         </motion.button>
