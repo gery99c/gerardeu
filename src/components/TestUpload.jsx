@@ -15,10 +15,18 @@ function TestUpload() {
       const fileName = `test_${Date.now()}.${fileExt}`
 
       console.log('Iniciando subida de archivo:', fileName)
+      console.log('Bucket name:', 'joy-images') // Para verificar el nombre del bucket
+
+      // Listar buckets disponibles
+      const { data: buckets, error: bucketsError } = await supabase
+        .storage
+        .listBuckets()
+      
+      console.log('Buckets disponibles:', buckets)
 
       // Subir a Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('joy-images')
+        .from('joy-images') // Asegúrate de que este nombre coincida exactamente
         .upload(fileName, file)
 
       if (uploadError) {
