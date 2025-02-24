@@ -7,7 +7,8 @@ const s3Client = new S3Client({
     accessKeyId: '88cb45fa73ff0369de72efd69db82e44',
     secretAccessKey: '7991c97a7e85dba474aa810bdaf1ebd375ab9431af96c5871c6abadc391d912a'
   },
-  forcePathStyle: true
+  forcePathStyle: true,
+  customUserAgent: 'Supabase-S3'
 })
 
 export { s3Client } 
