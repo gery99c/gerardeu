@@ -29,13 +29,25 @@ function TestUpload() {
       const fileExt = file.name.split('.').pop()
       const fileName = `test_${Date.now()}.${fileExt}`
 
-      console.log('Buckets disponibles:', buckets)
-      console.log('Intentando subir a bucket: joy-images')
+      // Primero, intentemos listar los buckets para ver qué tenemos disponible
+      const { data: bucketsData, error: bucketsError } = await supabase.storage.listBuckets()
+      console.log('Buckets disponibles:', bucketsData)
+      
+      if (bucketsError) {
+        throw new Error('Error al listar buckets: ' + bucketsError.message)
+      }
 
-      // Subir a Storage
+      // Subir a Storage usando el primer bucket disponible
+      const bucketName = bucketsData[0]?.name
+      if (!bucketName) {
+        throw new Error('No hay buckets disponibles')
+      }
+
+      console.log('Intentando subir al bucket:', bucketName)
+
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('joy-images')
-        .upload(fileName, file)
+        .from(bucketName)
+        .upload(`public/${fileName}`, file)
 
       if (uploadError) {
         console.error('Error al subir a storage:', uploadError)
@@ -46,15 +58,15 @@ function TestUpload() {
 
       // Obtener URL pública
       const { data: { publicUrl } } = supabase.storage
-        .from('joy-images')
-        .getPublicUrl(fileName)
+        .from(bucketName)
+        .getPublicUrl(`public/${fileName}`)
 
       console.log('URL pública generada:', publicUrl)
       alert('¡Imagen subida con éxito! URL: ' + publicUrl)
 
     } catch (error) {
       console.error('Error completo:', error)
-      alert('Error: ' + error.message)
+      alert('Error: ' + (error.message || 'Error desconocido'))
     } finally {
       setUploading(false)
     }
@@ -68,7 +80,9 @@ function TestUpload() {
         <h3>Buckets disponibles:</h3>
         <ul>
           {buckets.map(bucket => (
-            <li key={bucket.id}>{bucket.name} - {bucket.id}</li>
+            <li key={bucket.id || bucket.name}>
+              {bucket.name} {bucket.public ? '(público)' : '(privado)'}
+            </li>
           ))}
         </ul>
       </div>
