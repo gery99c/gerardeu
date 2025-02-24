@@ -143,11 +143,75 @@ function App() {
     }
   };
 
-  const handleLike = (id) => {
-    setMemes(memes.map(meme => 
-      meme.id === id ? { ...meme, likes: meme.likes + 1 } : meme
-    ));
-  };
+  const handleLike = async (memeId, currentLikes) => {
+    try {
+      const newLikes = (currentLikes || 0) + 1
+      
+      const { error } = await supabase
+        .from('joy_images')
+        .update({ likes: newLikes })
+        .eq('id', memeId)
+
+      if (error) throw error
+
+      // Actualizar el estado local
+      setMemes(prevMemes =>
+        prevMemes.map(meme =>
+          meme.id === memeId
+            ? { ...meme, likes: newLikes }
+            : meme
+        )
+      )
+    } catch (error) {
+      console.error('Error al dar like:', error)
+      alert('Error al dar like')
+    }
+  }
+
+  const handleShare = async (memeId, memeUrl) => {
+    try {
+      // Intentar usar la Web Share API si está disponible
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Mira este meme',
+          text: '¡Échale un vistazo a este meme!',
+          url: memeUrl
+        })
+      } else {
+        // Fallback: copiar al portapapeles
+        await navigator.clipboard.writeText(memeUrl)
+        alert('¡URL copiada al portapapeles!')
+      }
+
+      // Incrementar contador de compartidos
+      const { data: meme } = await supabase
+        .from('joy_images')
+        .select('shares')
+        .eq('id', memeId)
+        .single()
+
+      const newShares = ((meme?.shares || 0) + 1)
+
+      const { error } = await supabase
+        .from('joy_images')
+        .update({ shares: newShares })
+        .eq('id', memeId)
+
+      if (error) throw error
+
+      // Actualizar estado local
+      setMemes(prevMemes =>
+        prevMemes.map(meme =>
+          meme.id === memeId
+            ? { ...meme, shares: newShares }
+            : meme
+        )
+      )
+    } catch (error) {
+      console.error('Error al compartir:', error)
+      alert('Error al compartir el meme')
+    }
+  }
 
   const nextMeme = () => {
     if (currentIndex < filteredMemes.length - 1) {
@@ -814,7 +878,7 @@ function App() {
                           whileHover={{ scale: 1.2 }}
                           whileTap={{ scale: 0.9 }}
                           className="text-red-500 hover:text-red-600"
-                          onClick={() => handleLike(meme.id)}
+                          onClick={() => handleLike(meme.id, meme.likes)}
                         >
                           <FaHeart />
                           <span className="ml-1">{meme.likes || 0}</span>
@@ -823,7 +887,7 @@ function App() {
                           whileHover={{ scale: 1.2 }}
                           whileTap={{ scale: 0.9 }}
                           className="text-blue-400 hover:text-blue-500"
-                          onClick={() => handleShare(meme.url)}
+                          onClick={() => handleShare(meme.id, meme.url)}
                         >
                           <FaShare />
                         </motion.button>
@@ -838,6 +902,29 @@ function App() {
       </div>
 
       <TestUpload />
+
+      <style>{`
+        .like-button, .share-button {
+          background: none;
+          border: none;
+          color: white;
+          cursor: pointer;
+          padding: 5px 10px;
+          font-size: 1.1em;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          transition: transform 0.1s;
+        }
+
+        .like-button:hover, .share-button:hover {
+          transform: scale(1.1);
+        }
+
+        .like-button:active, .share-button:active {
+          transform: scale(0.95);
+        }
+      `}</style>
     </motion.div>
   );
 }
