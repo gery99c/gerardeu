@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Upload } from '@aws-sdk/lib-storage'
-import { s3Client } from '../lib/s3'
+import { s3Client, SUPABASE_PROJECT_ID, SUPABASE_BUCKET, SUPABASE_TABLE } from '../lib/s3'
+import { supabase } from '../supabase' // Asegúrate de tener este import
 
 function S3Upload() {
   const [uploading, setUploading] = useState(false)
@@ -18,24 +19,23 @@ function S3Upload() {
       const fileName = `upload_${Date.now()}.${fileExt}`
 
       console.log('Iniciando subida:', {
-        bucket: 'joy-images',
+        bucket: SUPABASE_BUCKET,
         fileName,
-        contentType: file.type
+        projectId: SUPABASE_PROJECT_ID
       })
 
+      // 1. Subir archivo a S3
       const parallelUploads3 = new Upload({
         client: s3Client,
         params: {
-          Bucket: 'joy-images',
+          Bucket: SUPABASE_BUCKET,
           Key: fileName,
           Body: file,
           ContentType: file.type,
           ACL: 'public-read'
         },
-        tags: [], // opcional
-        queueSize: 4, // opcional
-        partSize: 1024 * 1024 * 5, // opcional 5MB por parte
-        leavePartsOnError: false, // opcional
+        queueSize: 4,
+        partSize: 1024 * 1024 * 5
       })
 
       parallelUploads3.on('httpUploadProgress', (progress) => {
@@ -44,12 +44,25 @@ function S3Upload() {
         console.log(`Progreso: ${percentage}%`)
       })
 
-      console.log('Iniciando transferencia...')
       await parallelUploads3.done()
-      console.log('Transferencia completada')
+      
+      // Generar URL pública
+      const publicUrl = `https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/${SUPABASE_BUCKET}/${fileName}`
+      
+      // 2. Guardar referencia en la base de datos
+      const { data, error } = await supabase
+        .from(SUPABASE_TABLE)
+        .insert([
+          {
+            url: publicUrl,
+            name: fileName,
+            created_at: new Date().toISOString()
+          }
+        ])
 
-      const publicUrl = `https://vbytyrxlktjmbqxunrhw.supabase.co/storage/v1/object/public/joy-images/${fileName}`
-      console.log('URL pública:', publicUrl)
+      if (error) throw error
+
+      console.log('Archivo subido y guardado en BD:', data)
       alert('¡Subida exitosa!\nURL: ' + publicUrl)
 
     } catch (error) {
