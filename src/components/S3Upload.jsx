@@ -73,35 +73,6 @@ function S3Upload() {
     }
   }
 
-  return (
-    <div style={{ padding: '20px' }}>
-      <h2>Subir Imagen</h2>
-      <div style={{ marginBottom: '10px', backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '5px' }}>
-        <pre style={{ margin: 0, fontSize: '14px' }}>
-          Proyecto: ybytyrxlktjmbqxunrhw
-          Bucket: joy-images
-          Tabla: joy_images
-        </pre>
-      </div>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleUpload}
-        disabled={uploading}
-        style={{ marginBottom: '10px' }}
-      />
-      {uploading && (
-        <div style={{ 
-          padding: '10px',
-          backgroundColor: '#e8f5e9',
-          borderRadius: '5px',
-          marginTop: '10px'
-        }}>
-          <p style={{ margin: 0 }}>Subiendo archivo...</p>
-        </div>
-      )}
-    </div>
-  )
 }
 
 export default S3Upload 

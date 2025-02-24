@@ -42,18 +42,7 @@ function TestUpload() {
     }
   }
 
-  return (
-    <div style={{ padding: '20px' }}>
-      <h2>Subir Imagen</h2>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleUpload}
-        disabled={uploading}
-      />
-      {uploading && <p>Subiendo...</p>}
-    </div>
-  )
+  
 }
 
 export default TestUpload 
