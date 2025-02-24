@@ -72,31 +72,8 @@ function App() {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    loadMemes();
-  }, []);
-
-  const loadMemes = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('joy_images')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const dbMemes = data.map(item => ({
-        id: item.id,
-        imageUrl: item.url,
-        title: item.name.split('_')[1]?.split('.')[0] || 'Meme',
-        category: item.category || 'random',
-        likes: item.likes || 0
-      }));
-
-      setMemes(dbMemes);
-    } catch (error) {
-      console.error('Error cargando memes:', error);
-    }
-  };
+    localStorage.setItem('memes', JSON.stringify(memes));
+  }, [memes]);
 
   const filteredMemes = memes.filter(meme => {
     const matchesSearch = meme.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -231,34 +208,37 @@ function App() {
       const fileExt = file.name.split('.').pop();
       const fileName = `meme_${Date.now()}.${fileExt}`;
 
-      // 1. Subir a Storage
-      const { data: storageData, error: storageError } = await supabase.storage
+      const { data, error } = await supabase.storage
         .from('joy-images')
-        .upload(fileName, file);
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (storageError) throw storageError;
+      if (error) throw error;
 
-      // 2. Obtener URL pública
       const { data: { publicUrl } } = supabase.storage
         .from('joy-images')
         .getPublicUrl(fileName);
 
-      // 3. Guardar en la base de datos
-      const { data: dbData, error: dbError } = await supabase
+      // Guardar en la base de datos con categoría y contadores
+      const { error: dbError } = await supabase
         .from('joy_images')
-        .insert({
-          url: publicUrl,
-          name: fileName,
-          category: selectedCategory,
-          likes: 0,
-          created_at: new Date().toISOString()
-        })
-        .select();
+        .insert([
+          {
+            url: publicUrl,
+            name: fileName,
+            category: selectedCategory,
+            likes: 0,
+            shares: 0,
+            created_at: new Date().toISOString()
+          }
+        ]);
 
       if (dbError) throw dbError;
 
-      // 4. Recargar los memes
-      await loadMemes();
+      console.log('Meme subido:', publicUrl);
+      setSelectedCategory('');
 
     } catch (error) {
       console.error('Error:', error);
@@ -331,25 +311,19 @@ function App() {
                 <FaHandsHelping className="text-xl" />
               </motion.button>
               <input
-                type="file"
                 ref={fileInputRef}
-                onChange={handleFileSelected}
+                type="file"
                 accept="image/*"
-                className="hidden"
+                onChange={handleFileSelected}
+                style={{ display: 'none' }}
               />
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-                onClick={handleUploadClick}
+              <button
+                className="upload-button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
               >
-                <span className="upload-icon">
-                  {uploading ? '📤' : '⬆️'}
-                </span>
-                <span className="upload-text">
-                  {uploading ? 'Subiendo...' : 'Subir Meme'}
-                </span>
-              </motion.button>
+                {uploading ? 'Subiendo...' : 'Subir Meme'}
+              </button>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
