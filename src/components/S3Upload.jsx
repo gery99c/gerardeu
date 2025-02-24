@@ -1,6 +1,11 @@
 import { useState } from 'react'
-import { PutObjectCommand } from '@aws-sdk/client-s3'
-import { s3Client, SUPABASE_PROJECT_ID, SUPABASE_BUCKET } from '../lib/s3'
+import { createClient } from '@supabase/supabase-js'
+
+// Crear un nuevo cliente de Supabase con las credenciales correctas
+const supabase = createClient(
+  'https://rrclsnobkthwwvnfxyuf.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyY2xzbm9ia3Rod3d2bmZ4eXVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAzOTQzOTQsImV4cCI6MjA1NTk3MDM5NH0.R4SdQ_5UZC8aerokqKiauDrWYELq5Q_UywLo-dlb3CU'
+)
 
 function S3Upload() {
   const [uploading, setUploading] = useState(false)
@@ -15,37 +20,36 @@ function S3Upload() {
       const fileName = `upload_${Date.now()}.${fileExt}`
 
       console.log('Iniciando subida:', {
-        bucket: SUPABASE_BUCKET,
+        bucket: 'joy-images',
         fileName,
-        projectId: SUPABASE_PROJECT_ID
+        fileSize: file.size
       })
 
-      // Convertir el archivo a ArrayBuffer
-      const fileBuffer = await new Promise((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = (e) => resolve(e.target.result)
-        reader.onerror = (e) => reject(e)
-        reader.readAsArrayBuffer(file)
-      })
+      // Subir archivo usando el cliente de Supabase
+      const { data, error } = await supabase.storage
+        .from('joy-images')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
 
-      const command = new PutObjectCommand({
-        Bucket: SUPABASE_BUCKET,
-        Key: fileName,
-        Body: new Uint8Array(fileBuffer),
-        ContentType: file.type,
-        ACL: 'public-read'
-      })
+      if (error) {
+        console.error('Error de subida:', error)
+        throw error
+      }
 
-      console.log('Enviando comando...')
-      const response = await s3Client.send(command)
-      console.log('Respuesta:', response)
+      console.log('Archivo subido:', data)
 
-      const publicUrl = `https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/${SUPABASE_BUCKET}/${fileName}`
+      // Obtener URL pública
+      const { data: { publicUrl } } = supabase.storage
+        .from('joy-images')
+        .getPublicUrl(fileName)
+
       console.log('URL pública:', publicUrl)
       alert('¡Subida exitosa!\nURL: ' + publicUrl)
 
     } catch (error) {
-      console.error('Error detallado:', error)
+      console.error('Error completo:', error)
       alert('Error: ' + (error.message || 'Error desconocido'))
     } finally {
       setUploading(false)
@@ -57,8 +61,7 @@ function S3Upload() {
       <h2>Subir Imagen</h2>
       <div style={{ marginBottom: '10px', backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '5px' }}>
         <pre style={{ margin: 0, fontSize: '14px' }}>
-          Bucket: {SUPABASE_BUCKET}
-          Project: {SUPABASE_PROJECT_ID}
+          Bucket: joy-images
         </pre>
       </div>
       <input
