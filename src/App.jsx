@@ -1005,39 +1005,42 @@ function App() {
         }
 
         .nav-menu {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+          display: flex;
           background: #1a1f2e;
           width: 100%;
-          padding: 15px;
-          gap: 10px;
+          padding: 15px 5px;
+          overflow-x: scroll;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          position: relative;
         }
 
         .nav-link {
           color: #4a90e2;
           text-decoration: none;
-          text-align: center;
+          padding: 0 15px;
           white-space: nowrap;
           font-size: 14px;
+          min-width: max-content;
+          display: inline-block;
+        }
+
+        .nav-menu::-webkit-scrollbar {
+          display: none;
         }
 
         @media (max-width: 768px) {
           .nav-menu {
-            grid-template-columns: repeat(3, 1fr);
-            padding: 10px;
-            gap: 8px;
+            padding: 15px 5px;
+            gap: 0;
+            justify-content: flex-start;
+            touch-action: pan-x;
+            -ms-overflow-style: none;
           }
           
           .nav-link {
-            font-size: 13px;
-            padding: 5px;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .nav-menu {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 5px;
+            padding: 0 10px;
+            font-size: 14px;
           }
         }
       `}</style>
