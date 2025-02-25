@@ -1009,10 +1009,18 @@ function App() {
           background: #1a1f2e;
           width: 100%;
           padding: 15px 5px;
-          overflow-x: scroll;
+          overflow-x: scroll !important;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
           position: relative;
+          touch-action: pan-x;
+          -webkit-user-select: none;
+          user-select: none;
+          cursor: grab;
+        }
+
+        .nav-menu:active {
+          cursor: grabbing;
         }
 
         .nav-link {
@@ -1021,26 +1029,33 @@ function App() {
           padding: 0 15px;
           white-space: nowrap;
           font-size: 14px;
-          min-width: max-content;
+          flex: 0 0 auto;
           display: inline-block;
+          -webkit-tap-highlight-color: transparent;
         }
 
         .nav-menu::-webkit-scrollbar {
           display: none;
+          width: 0;
+          height: 0;
         }
 
         @media (max-width: 768px) {
           .nav-menu {
+            overflow-x: scroll !important;
+            -webkit-overflow-scrolling: touch !important;
+            scroll-behavior: smooth;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            flex-wrap: nowrap;
             padding: 15px 5px;
             gap: 0;
-            justify-content: flex-start;
-            touch-action: pan-x;
-            -ms-overflow-style: none;
           }
           
           .nav-link {
             padding: 0 10px;
             font-size: 14px;
+            pointer-events: auto;
           }
         }
       `}</style>
