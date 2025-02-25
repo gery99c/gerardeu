@@ -926,12 +926,12 @@ function App() {
         }
 
         .meme-image-container {
-          width: 800px;
+          width: 1200px;
           margin: 0 auto;
         }
 
         .meme-image-container img {
-          width: 800px;
+          width: 1200px;
           height: auto;
           display: block;
         }
