@@ -294,8 +294,8 @@ function App() {
       const file = event.target.files?.[0]
       if (!file) return
 
-      // Pedir al usuario la descripción del meme
       const description = prompt('Introduce una descripción para el meme:') || 'Sin descripción'
+      const category = prompt('Categoría (Divertidos, Programación, Gaming, Animales, Random):') || 'Random'
 
       const fileExt = file.name.split('.').pop()
       const fileName = `meme_${Date.now()}.${fileExt}`
@@ -310,25 +310,21 @@ function App() {
         .from('joy-images')
         .getPublicUrl(fileName)
 
-      // Guardar en la tabla joy_images incluyendo la descripción
       const { error: dbError } = await supabase
         .from('joy_images')
-        .insert([
-          {
-            url: publicUrl,
-            name: fileName,
-            category: 'random',
-            likes: 0,
-            description: description // Añadimos la descripción
-          }
-        ])
+        .insert([{
+          url: publicUrl,
+          name: fileName,
+          category: category,
+          description: description,
+          likes: 0
+        }])
 
       if (dbError) throw dbError
 
       await loadMemes()
-
     } catch (error) {
-      console.error('Error al subir:', error)
+      console.error('Error:', error)
       alert('Error al subir el meme: ' + error.message)
     } finally {
       setUploading(false)
@@ -943,44 +939,6 @@ function App() {
 
       <TestUpload />
 
-      {/* Botón del chat */}
-      <button 
-        className="chat-button"
-        onClick={() => setIsChatOpen(!isChatOpen)}
-      >
-        {isChatOpen ? '✕' : '💬'}
-      </button>
-
-      {/* Ventana del chat */}
-      {isChatOpen && (
-        <div className="chat-window">
-          <div className="chat-header">
-            <h3>Chat con JoyBot</h3>
-          </div>
-          <div className="chat-messages">
-            {messages.map((message, index) => (
-              <div 
-                key={index} 
-                className={`message ${message.type}`}
-              >
-                {message.text}
-              </div>
-            ))}
-            <div ref={chatEndRef} />
-          </div>
-          <div className="chat-input">
-            <input
-              type="text"
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder="Escribe un mensaje..."
-            />
-            <button onClick={handleSendMessage}>Enviar</button>
-          </div>
-        </div>
-      )}
-
       <style>{`
         .app {
           background: #1a1f2e;
@@ -1046,111 +1004,6 @@ function App() {
           }
         }
 
-        .chat-button {
-          position: fixed;
-          bottom: 20px;
-          right: 20px;
-          width: 60px;
-          height: 60px;
-          border-radius: 30px;
-          background: #4a90e2;
-          color: white;
-          border: none;
-          font-size: 24px;
-          cursor: pointer;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-          z-index: 1000;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: transform 0.2s;
-        }
-
-        .chat-button:hover {
-          transform: scale(1.1);
-        }
-
-        .chat-window {
-          position: fixed;
-          bottom: 90px;
-          right: 20px;
-          width: 300px;
-          height: 400px;
-          background: #2a2f3e;
-          border-radius: 10px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-          z-index: 1000;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .chat-header {
-          padding: 15px;
-          background: #1a1f2e;
-          border-radius: 10px 10px 0 0;
-          color: white;
-        }
-
-        .chat-header h3 {
-          margin: 0;
-        }
-
-        .chat-messages {
-          flex: 1;
-          overflow-y: auto;
-          padding: 15px;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-
-        .message {
-          padding: 10px;
-          border-radius: 10px;
-          max-width: 80%;
-          word-wrap: break-word;
-        }
-
-        .message.bot {
-          background: #4a90e2;
-          color: white;
-          align-self: flex-start;
-        }
-
-        .message.user {
-          background: #357abd;
-          color: white;
-          align-self: flex-end;
-        }
-
-        .chat-input {
-          padding: 15px;
-          display: flex;
-          gap: 10px;
-          border-top: 1px solid #1a1f2e;
-        }
-
-        .chat-input input {
-          flex: 1;
-          padding: 8px;
-          border-radius: 5px;
-          border: 1px solid #4a90e2;
-          background: #1a1f2e;
-          color: white;
-        }
-
-        .chat-input button {
-          padding: 8px 15px;
-          background: #4a90e2;
-          color: white;
-          border: none;
-          border-radius: 5px;
-          cursor: pointer;
-        }
-
-        .chat-input button:hover {
-          background: #357abd;
-        }
       `}</style>
     </motion.div>
   );
