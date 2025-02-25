@@ -377,17 +377,14 @@ function App() {
       className="min-h-screen bg-gray-100"
     >
       <div className="menu-container">
-        <nav className="categories-menu">
-          {categories.map(category => (
-            <button 
-              key={category.id}
-              className="category-button"
-              onClick={() => handleCategoryChange(category.id)}
-            >
-              {category.name}
-            </button>
-          ))}
-        </nav>
+        <div className="categories">
+          <button className="category-tab">Todos</button>
+          <button className="category-tab">Divertidos</button>
+          <button className="category-tab">Programación</button>
+          <button className="category-tab">Gaming</button>
+          <button className="category-tab">Animales</button>
+          <button className="category-tab">Random</button>
+        </div>
       </div>
 
       <nav className="bg-black shadow-lg fixed w-full z-10">
@@ -986,38 +983,31 @@ function App() {
           width: 100%;
           overflow-x: auto;
           -webkit-overflow-scrolling: touch;
-          margin-bottom: 20px;
-          position: sticky;
-          top: 0;
           background: #1a1f2e;
-          z-index: 100;
-          padding: 10px 0;
+          margin-bottom: 20px;
         }
 
-        .categories-menu {
+        .categories {
           display: flex;
           gap: 10px;
-          padding: 0 15px;
+          padding: 10px;
           min-width: min-content;
         }
 
-        .category-button {
-          white-space: nowrap;
-          padding: 8px 16px;
+        .category-tab {
+          background: none;
           border: none;
-          border-radius: 20px;
-          background: #2a2f3e;
-          color: white;
+          color: #4a90e2;
+          padding: 8px 16px;
           cursor: pointer;
-          transition: all 0.2s;
+          white-space: nowrap;
         }
 
-        .category-button:hover,
-        .category-button.active {
-          background: #4a90e2;
+        .category-tab:hover {
+          color: white;
         }
 
-        /* Ocultar la barra de desplazamiento pero mantener la funcionalidad */
+        /* Ocultar scrollbar pero mantener funcionalidad */
         .menu-container::-webkit-scrollbar {
           display: none;
         }
@@ -1028,54 +1018,8 @@ function App() {
         }
 
         @media (max-width: 768px) {
-          .menu-container {
-            padding: 10px 0;
-          }
-
-          .categories-menu {
-            padding: 0 10px;
-          }
-
-          .category-button {
-            padding: 6px 12px;
-            font-size: 14px;
-          }
-
-          .app {
-            padding: 0;
-          }
-
-          .meme-grid {
+          .categories {
             padding: 10px;
-            gap: 15px;
-          }
-
-          .meme-footer {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-          }
-
-          .actions {
-            width: 100%;
-            justify-content: space-between;
-          }
-
-          .upload-button {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 100;
-            border-radius: 30px;
-            padding: 12px 24px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-          }
-        }
-
-        @media (max-width: 480px) {
-          .category-button {
-            padding: 5px 10px;
-            font-size: 13px;
           }
         }
       `}</style>
