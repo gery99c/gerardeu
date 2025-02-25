@@ -284,54 +284,53 @@ function App() {
 
   const handleFileSelected = async (event) => {
     try {
-      setUploading(true);
-      const file = event.target.files?.[0];
-      if (!file) return;
+      setUploading(true)
+      const file = event.target.files?.[0]
+      if (!file) return
 
-      // 1. Subir archivo a Storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `meme_${Date.now()}.${fileExt}`;
+      // Pedir al usuario la descripción del meme
+      const description = prompt('Introduce una descripción para el meme:') || 'Sin descripción'
+
+      const fileExt = file.name.split('.').pop()
+      const fileName = `meme_${Date.now()}.${fileExt}`
 
       const { error: storageError } = await supabase.storage
         .from('joy-images')
-        .upload(fileName, file);
+        .upload(fileName, file)
 
-      if (storageError) throw storageError;
+      if (storageError) throw storageError
 
-      // 2. Obtener URL pública
       const { data: { publicUrl } } = supabase.storage
         .from('joy-images')
-        .getPublicUrl(fileName);
+        .getPublicUrl(fileName)
 
-      // 3. Guardar en la tabla joy_images
+      // Guardar en la tabla joy_images incluyendo la descripción
       const { error: dbError } = await supabase
         .from('joy_images')
         .insert([
           {
             url: publicUrl,
             name: fileName,
-            category: selectedCategory,
+            category: 'random',
             likes: 0,
-            shares: 0,
-            created_at: new Date().toISOString()
+            description: description // Añadimos la descripción
           }
-        ]);
+        ])
 
-      if (dbError) throw dbError;
+      if (dbError) throw dbError
 
-      // 4. Recargar memes
-      await loadMemes();
+      await loadMemes()
 
     } catch (error) {
-      console.error('Error al subir:', error);
-      alert('Error al subir el meme: ' + error.message);
+      console.error('Error al subir:', error)
+      alert('Error al subir el meme: ' + error.message)
     } finally {
-      setUploading(false);
+      setUploading(false)
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = ''
       }
     }
-  };
+  }
 
   return (
     <motion.div
@@ -842,7 +841,7 @@ function App() {
                   <motion.div className="relative">
                     <motion.img
                       src={meme.url}
-                      alt={meme.name}
+                      alt={meme.description || 'Meme'}
                       className="w-full h-48 object-cover"
                       whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.2 }}
@@ -853,7 +852,7 @@ function App() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.1 }}
                     >
-                      <h3 className="text-white text-lg font-semibold">{meme.name.split('_')[1]?.split('.')[0] || 'Meme'}</h3>
+                      <h3 className="text-white text-lg font-semibold">{meme.description || 'Sin descripción'}</h3>
                     </motion.div>
                   </motion.div>
 
