@@ -904,6 +904,41 @@ function App() {
       <TestUpload />
 
       <style>{`
+        .app {
+          background: #1a1f2e;
+          min-height: 100vh;
+          padding: 20px;
+        }
+
+        .meme-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 20px;
+          margin-top: 20px;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        .meme-card {
+          background: #2a2f3e;
+          border-radius: 10px;
+          overflow: hidden;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .meme-image-container {
+          position: relative;
+          width: 100%;
+          height: 400px; /* Altura fija para todas las imágenes */
+        }
+
+        .meme-image-container img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain; /* Mantiene la proporción original */
+          background: #1a1f2e; /* Fondo oscuro para imágenes transparentes */
+        }
+
         .like-button, .share-button {
           background: none;
           border: none;
@@ -923,34 +958,6 @@ function App() {
 
         .like-button:active, .share-button:active {
           transform: scale(0.95);
-        }
-
-        .meme-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-          gap: 16px;
-          padding: 16px;
-        }
-
-        .meme-card {
-          background: #2a2f3e;
-          border-radius: 8px;
-          overflow: hidden;
-        }
-
-        .meme-image-container {
-          position: relative;
-          width: 100%;
-          padding-top: 100%; /* Aspecto cuadrado 1:1 */
-        }
-
-        .meme-image-container img {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: cover; /* Mantiene la proporción y cubre el contenedor */
         }
       `}</style>
     </motion.div>
