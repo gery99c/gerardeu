@@ -912,33 +912,28 @@ function App() {
 
         .meme-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(800px, 1fr));
+          grid-template-columns: 1fr;
           gap: 20px;
-          max-width: 1000px;
+          max-width: 800px;
           margin: 0 auto;
-          padding: 0 15px;
         }
 
         .meme-card {
+          width: 100%;
           background: #2a2f3e;
           border-radius: 10px;
           overflow: hidden;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          margin-bottom: 20px;
         }
 
         .meme-image-container {
-          position: relative;
-          width: 100%;
+          width: 800px;
+          margin: 0 auto;
         }
 
         .meme-image-container img {
-          width: 100%;
+          width: 800px;
           height: auto;
           display: block;
-          min-height: 600px;
-          object-fit: contain;
-          background: #1a1f2e;
         }
 
         .like-button, .share-button {
@@ -964,11 +959,12 @@ function App() {
 
         @media (max-width: 850px) {
           .meme-grid {
-            grid-template-columns: 1fr;
+            max-width: 100%;
           }
-          
+
+          .meme-image-container,
           .meme-image-container img {
-            min-height: 400px;
+            width: 100%;
           }
         }
       `}</style>
