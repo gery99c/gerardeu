@@ -929,14 +929,14 @@ function App() {
         .meme-image-container {
           position: relative;
           width: 100%;
-          height: 400px; /* Altura fija para todas las imágenes */
         }
 
         .meme-image-container img {
           width: 100%;
-          height: 100%;
-          object-fit: contain; /* Mantiene la proporción original */
-          background: #1a1f2e; /* Fondo oscuro para imágenes transparentes */
+          height: auto;
+          display: block;
+          max-height: none; /* Eliminamos la altura máxima */
+          object-fit: contain;
         }
 
         .like-button, .share-button {
