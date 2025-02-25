@@ -912,11 +912,12 @@ function App() {
 
         .meme-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-          gap: 20px;
+          grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+          gap: 30px;
           margin-top: 20px;
-          max-width: 1200px;
+          max-width: 1600px;
           margin: 0 auto;
+          padding: 0 20px;
         }
 
         .meme-card {
@@ -935,7 +936,8 @@ function App() {
           width: 100%;
           height: auto;
           display: block;
-          max-height: none; /* Eliminamos la altura máxima */
+          min-height: 400px;
+          max-height: 800px;
           object-fit: contain;
         }
 
