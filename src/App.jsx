@@ -70,6 +70,12 @@ function App() {
   const [previewUrl, setPreviewUrl] = useState('');
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [messages, setMessages] = useState([
+    { type: 'bot', text: '¡Hola! Soy JoyBot 😄 ¿Quieres que te cuente un chiste?' }
+  ])
+  const [inputMessage, setInputMessage] = useState('')
+  const chatEndRef = useRef(null)
 
   useEffect(() => {
     loadMemes();
@@ -288,9 +294,8 @@ function App() {
       const file = event.target.files?.[0]
       if (!file) return
 
-      // Crear un modal personalizado para la información del meme
-      const description = await showMemeUploadDialog()
-      if (!description) return // Si el usuario cancela
+      // Pedir al usuario la descripción del meme
+      const description = prompt('Introduce una descripción para el meme:') || 'Sin descripción'
 
       const fileExt = file.name.split('.').pop()
       const fileName = `meme_${Date.now()}.${fileExt}`
@@ -305,15 +310,18 @@ function App() {
         .from('joy-images')
         .getPublicUrl(fileName)
 
+      // Guardar en la tabla joy_images incluyendo la descripción
       const { error: dbError } = await supabase
         .from('joy_images')
-        .insert([{
-          url: publicUrl,
-          name: fileName,
-          category: description.category,
-          description: description.text,
-          likes: 0
-        }])
+        .insert([
+          {
+            url: publicUrl,
+            name: fileName,
+            category: 'random',
+            likes: 0,
+            description: description // Añadimos la descripción
+          }
+        ])
 
       if (dbError) throw dbError
 
@@ -330,60 +338,39 @@ function App() {
     }
   }
 
-  // Función para mostrar el diálogo de subida
-  const showMemeUploadDialog = () => {
-    return new Promise((resolve) => {
-      const dialog = document.createElement('div')
-      dialog.className = 'upload-dialog-overlay'
+  // Función para auto-scroll del chat
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim()) return
+
+    // Añadir mensaje del usuario
+    setMessages(prev => [...prev, { type: 'user', text: inputMessage }])
+    const userMessage = inputMessage
+    setInputMessage('')
+
+    // Simular respuesta del bot (aquí podrías integrar una API de IA)
+    setTimeout(() => {
+      let botResponse = "¡Jaja! Muy bueno. ¿Quieres escuchar otro chiste?"
       
-      dialog.innerHTML = `
-        <div class="upload-dialog">
-          <h2>Subir Meme</h2>
-          <textarea 
-            id="meme-description" 
-            placeholder="Describe tu meme..."
-            maxlength="200"
-          ></textarea>
-          <select id="meme-category">
-            ${categories.map(cat => `
-              <option value="${cat.id}">${cat.name}</option>
-            `).join('')}
-          </select>
-          <div class="dialog-buttons">
-            <button id="cancel-upload">Cancelar</button>
-            <button id="confirm-upload">Subir</button>
-          </div>
-        </div>
-      `
-
-      document.body.appendChild(dialog)
-
-      const confirmBtn = dialog.querySelector('#confirm-upload')
-      const cancelBtn = dialog.querySelector('#cancel-upload')
-      const descriptionInput = dialog.querySelector('#meme-description')
-      const categorySelect = dialog.querySelector('#meme-category')
-
-      confirmBtn.onclick = () => {
-        const text = descriptionInput.value.trim()
-        if (!text) {
-          alert('Por favor, añade una descripción')
-          return
-        }
-        resolve({
-          text: text,
-          category: categorySelect.value
-        })
-        document.body.removeChild(dialog)
+      if (userMessage.toLowerCase().includes('sí') || userMessage.toLowerCase().includes('si')) {
+        const jokes = [
+          "¿Qué le dice un .gif a un .jpg? ¡Animate!",
+          "¿Por qué los programadores prefieren el frío? Porque tienen muchos bugs",
+          "¿Qué le dice un bit al otro? Nos vemos en el bus",
+          "¿Por qué el programador se quedó colgado? Porque perdió el control",
+        ]
+        botResponse = jokes[Math.floor(Math.random() * jokes.length)]
       }
 
-      cancelBtn.onclick = () => {
-        resolve(null)
-        document.body.removeChild(dialog)
-      }
-
-      // Autofocus en la descripción
-      descriptionInput.focus()
-    })
+      setMessages(prev => [...prev, { type: 'bot', text: botResponse }])
+    }, 1000)
   }
 
   return (
@@ -956,6 +943,44 @@ function App() {
 
       <TestUpload />
 
+      {/* Botón del chat */}
+      <button 
+        className="chat-button"
+        onClick={() => setIsChatOpen(!isChatOpen)}
+      >
+        {isChatOpen ? '✕' : '💬'}
+      </button>
+
+      {/* Ventana del chat */}
+      {isChatOpen && (
+        <div className="chat-window">
+          <div className="chat-header">
+            <h3>Chat con JoyBot</h3>
+          </div>
+          <div className="chat-messages">
+            {messages.map((message, index) => (
+              <div 
+                key={index} 
+                className={`message ${message.type}`}
+              >
+                {message.text}
+              </div>
+            ))}
+            <div ref={chatEndRef} />
+          </div>
+          <div className="chat-input">
+            <input
+              type="text"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+              placeholder="Escribe un mensaje..."
+            />
+            <button onClick={handleSendMessage}>Enviar</button>
+          </div>
+        </div>
+      )}
+
       <style>{`
         .app {
           background: #1a1f2e;
@@ -1021,84 +1046,110 @@ function App() {
           }
         }
 
-        .upload-dialog-overlay {
+        .chat-button {
           position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.8);
+          bottom: 20px;
+          right: 20px;
+          width: 60px;
+          height: 60px;
+          border-radius: 30px;
+          background: #4a90e2;
+          color: white;
+          border: none;
+          font-size: 24px;
+          cursor: pointer;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+          z-index: 1000;
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 1000;
+          transition: transform 0.2s;
         }
 
-        .upload-dialog {
+        .chat-button:hover {
+          transform: scale(1.1);
+        }
+
+        .chat-window {
+          position: fixed;
+          bottom: 90px;
+          right: 20px;
+          width: 300px;
+          height: 400px;
           background: #2a2f3e;
-          padding: 20px;
           border-radius: 10px;
-          width: 90%;
-          max-width: 500px;
-        }
-
-        .upload-dialog h2 {
-          color: white;
-          margin-bottom: 20px;
-          text-align: center;
-        }
-
-        .upload-dialog textarea {
-          width: 100%;
-          height: 100px;
-          padding: 10px;
-          margin-bottom: 15px;
-          border-radius: 5px;
-          background: #1a1f2e;
-          color: white;
-          border: 1px solid #4a90e2;
-          resize: vertical;
-        }
-
-        .upload-dialog select {
-          width: 100%;
-          padding: 10px;
-          margin-bottom: 20px;
-          border-radius: 5px;
-          background: #1a1f2e;
-          color: white;
-          border: 1px solid #4a90e2;
-        }
-
-        .dialog-buttons {
+          box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+          z-index: 1000;
           display: flex;
-          justify-content: flex-end;
+          flex-direction: column;
+        }
+
+        .chat-header {
+          padding: 15px;
+          background: #1a1f2e;
+          border-radius: 10px 10px 0 0;
+          color: white;
+        }
+
+        .chat-header h3 {
+          margin: 0;
+        }
+
+        .chat-messages {
+          flex: 1;
+          overflow-y: auto;
+          padding: 15px;
+          display: flex;
+          flex-direction: column;
           gap: 10px;
         }
 
-        .dialog-buttons button {
-          padding: 8px 20px;
+        .message {
+          padding: 10px;
+          border-radius: 10px;
+          max-width: 80%;
+          word-wrap: break-word;
+        }
+
+        .message.bot {
+          background: #4a90e2;
+          color: white;
+          align-self: flex-start;
+        }
+
+        .message.user {
+          background: #357abd;
+          color: white;
+          align-self: flex-end;
+        }
+
+        .chat-input {
+          padding: 15px;
+          display: flex;
+          gap: 10px;
+          border-top: 1px solid #1a1f2e;
+        }
+
+        .chat-input input {
+          flex: 1;
+          padding: 8px;
           border-radius: 5px;
+          border: 1px solid #4a90e2;
+          background: #1a1f2e;
+          color: white;
+        }
+
+        .chat-input button {
+          padding: 8px 15px;
+          background: #4a90e2;
+          color: white;
           border: none;
+          border-radius: 5px;
           cursor: pointer;
         }
 
-        #confirm-upload {
-          background: #4a90e2;
-          color: white;
-        }
-
-        #cancel-upload {
-          background: #666;
-          color: white;
-        }
-
-        .meme-description {
-          color: white;
-          padding: 10px;
-          font-size: 1.1em;
-          text-align: center;
-          margin: 10px 0;
+        .chat-input button:hover {
+          background: #357abd;
         }
       `}</style>
     </motion.div>
