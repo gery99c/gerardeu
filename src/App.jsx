@@ -994,24 +994,61 @@ function App() {
           gap: 20px;
           max-width: 800px;
           margin: 0 auto;
+          padding: 0 15px;
         }
 
         .meme-card {
-          width: 100%;
           background: #2a2f3e;
           border-radius: 10px;
           overflow: hidden;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
         .meme-image-container {
-          width: 1200px;
-          margin: 0 auto;
+          position: relative;
+          width: 100%;
         }
 
         .meme-image-container img {
-          width: 1200px;
+          width: 100%;
           height: auto;
           display: block;
+          background: #1a1f2e;
+        }
+
+        .meme-image-container h3 {
+          position: absolute;
+          top: 10px;
+          left: 10px;
+          margin: 0;
+          color: white;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+          background: rgba(0,0,0,0.5);
+          padding: 5px 10px;
+          border-radius: 5px;
+          font-size: 16px;
+        }
+
+        .meme-footer {
+          padding: 15px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        .category {
+          color: #4a90e2;
+          font-size: 0.9em;
+          padding: 4px 8px;
+          background: rgba(74,144,226,0.1);
+          border-radius: 4px;
+        }
+
+        .actions {
+          display: flex;
+          gap: 15px;
         }
 
         .like-button, .share-button {
@@ -1019,30 +1056,112 @@ function App() {
           border: none;
           color: white;
           cursor: pointer;
-          padding: 5px 10px;
-          font-size: 1.1em;
+          padding: 8px 12px;
+          font-size: 1em;
           display: flex;
           align-items: center;
           gap: 5px;
-          transition: transform 0.1s;
+          transition: all 0.2s;
+          border-radius: 4px;
         }
 
         .like-button:hover, .share-button:hover {
-          transform: scale(1.1);
+          background: rgba(255,255,255,0.1);
         }
 
-        .like-button:active, .share-button:active {
-          transform: scale(0.95);
+        .upload-button {
+          background: #4a90e2;
+          color: white;
+          border: none;
+          padding: 12px 24px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 1em;
+          transition: background 0.3s;
+          width: 100%;
+          max-width: 200px;
+          margin: 0 auto;
+          display: block;
         }
 
-        @media (max-width: 850px) {
+        .upload-button:hover {
+          background: #357abd;
+        }
+
+        .upload-button:disabled {
+          background: #666;
+          cursor: not-allowed;
+        }
+
+        /* Media Queries */
+        @media (min-width: 768px) {
           .meme-grid {
-            max-width: 100%;
+            padding: 0 20px;
           }
 
-          .meme-image-container,
-          .meme-image-container img {
+          .meme-image-container h3 {
+            font-size: 18px;
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .meme-grid {
+            padding: 0;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .app {
+            padding: 10px;
+          }
+
+          .meme-footer {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+
+          .actions {
             width: 100%;
+            justify-content: space-between;
+          }
+
+          .meme-image-container h3 {
+            font-size: 14px;
+            padding: 4px 8px;
+          }
+
+          .like-button, .share-button {
+            padding: 6px 10px;
+            font-size: 0.9em;
+          }
+
+          .upload-button {
+            padding: 10px 20px;
+            font-size: 0.9em;
+          }
+        }
+
+        /* Estilos para el modal de subida */
+        .upload-dialog {
+          width: 90%;
+          max-width: 500px;
+          margin: 20px;
+        }
+
+        @media (max-width: 480px) {
+          .upload-dialog {
+            width: 95%;
+            margin: 10px;
+            padding: 15px;
+          }
+
+          .upload-dialog textarea {
+            height: 80px;
+          }
+
+          .dialog-buttons button {
+            padding: 8px 16px;
+            font-size: 0.9em;
           }
         }
 
