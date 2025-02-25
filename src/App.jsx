@@ -1007,52 +1007,49 @@ function App() {
         .nav-menu {
           display: flex;
           background: #1a1f2e;
-          overflow-x: scroll;
+          overflow-x: auto;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
           width: 100%;
-          min-width: 100%;
-          position: relative;
-        }
-
-        .nav-menu > * {
-          flex: 0 0 auto;
-          padding: 0 15px;
-          font-size: 14px;
+          padding: 15px 0;
         }
 
         .nav-link {
           color: #4a90e2;
           text-decoration: none;
-          white-space: nowrap;
-          display: inline-block;
+          padding: 0 10px;
+          font-size: 16px;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          flex-shrink: 0;
         }
 
         .nav-menu::-webkit-scrollbar {
-          width: 0;
-          height: 0;
           display: none;
         }
 
         @media (max-width: 768px) {
           .nav-menu {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            padding: 15px 0;
             justify-content: flex-start;
-            width: 100vw;
+            gap: 5px;
+            padding: 15px 10px;
           }
-
-          .nav-menu > * {
-            padding: 0 12px;
-            font-size: 13px;
+          
+          .nav-link {
+            font-size: 14px;
+            padding: 0 8px;
           }
         }
 
         @media (max-width: 480px) {
-          .nav-menu > * {
-            padding: 0 10px;
-            font-size: 12px;
+          .nav-menu {
+            gap: 2px;
+          }
+          
+          .nav-link {
+            font-size: 13px;
+            padding: 0 6px;
           }
         }
       `}</style>
