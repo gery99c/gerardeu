@@ -288,8 +288,9 @@ function App() {
       const file = event.target.files?.[0]
       if (!file) return
 
-      // Pedir al usuario la descripción del meme
-      const description = prompt('Introduce una descripción para el meme:') || 'Sin descripción'
+      // Crear un modal personalizado para la información del meme
+      const description = await showMemeUploadDialog()
+      if (!description) return // Si el usuario cancela
 
       const fileExt = file.name.split('.').pop()
       const fileName = `meme_${Date.now()}.${fileExt}`
@@ -304,18 +305,15 @@ function App() {
         .from('joy-images')
         .getPublicUrl(fileName)
 
-      // Guardar en la tabla joy_images incluyendo la descripción
       const { error: dbError } = await supabase
         .from('joy_images')
-        .insert([
-          {
-            url: publicUrl,
-            name: fileName,
-            category: 'random',
-            likes: 0,
-            description: description // Añadimos la descripción
-          }
-        ])
+        .insert([{
+          url: publicUrl,
+          name: fileName,
+          category: description.category,
+          description: description.text,
+          likes: 0
+        }])
 
       if (dbError) throw dbError
 
@@ -330,6 +328,62 @@ function App() {
         fileInputRef.current.value = ''
       }
     }
+  }
+
+  // Función para mostrar el diálogo de subida
+  const showMemeUploadDialog = () => {
+    return new Promise((resolve) => {
+      const dialog = document.createElement('div')
+      dialog.className = 'upload-dialog-overlay'
+      
+      dialog.innerHTML = `
+        <div class="upload-dialog">
+          <h2>Subir Meme</h2>
+          <textarea 
+            id="meme-description" 
+            placeholder="Describe tu meme..."
+            maxlength="200"
+          ></textarea>
+          <select id="meme-category">
+            ${categories.map(cat => `
+              <option value="${cat.id}">${cat.name}</option>
+            `).join('')}
+          </select>
+          <div class="dialog-buttons">
+            <button id="cancel-upload">Cancelar</button>
+            <button id="confirm-upload">Subir</button>
+          </div>
+        </div>
+      `
+
+      document.body.appendChild(dialog)
+
+      const confirmBtn = dialog.querySelector('#confirm-upload')
+      const cancelBtn = dialog.querySelector('#cancel-upload')
+      const descriptionInput = dialog.querySelector('#meme-description')
+      const categorySelect = dialog.querySelector('#meme-category')
+
+      confirmBtn.onclick = () => {
+        const text = descriptionInput.value.trim()
+        if (!text) {
+          alert('Por favor, añade una descripción')
+          return
+        }
+        resolve({
+          text: text,
+          category: categorySelect.value
+        })
+        document.body.removeChild(dialog)
+      }
+
+      cancelBtn.onclick = () => {
+        resolve(null)
+        document.body.removeChild(dialog)
+      }
+
+      // Autofocus en la descripción
+      descriptionInput.focus()
+    })
   }
 
   return (
@@ -965,6 +1019,86 @@ function App() {
           .meme-image-container img {
             width: 100%;
           }
+        }
+
+        .upload-dialog-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+
+        .upload-dialog {
+          background: #2a2f3e;
+          padding: 20px;
+          border-radius: 10px;
+          width: 90%;
+          max-width: 500px;
+        }
+
+        .upload-dialog h2 {
+          color: white;
+          margin-bottom: 20px;
+          text-align: center;
+        }
+
+        .upload-dialog textarea {
+          width: 100%;
+          height: 100px;
+          padding: 10px;
+          margin-bottom: 15px;
+          border-radius: 5px;
+          background: #1a1f2e;
+          color: white;
+          border: 1px solid #4a90e2;
+          resize: vertical;
+        }
+
+        .upload-dialog select {
+          width: 100%;
+          padding: 10px;
+          margin-bottom: 20px;
+          border-radius: 5px;
+          background: #1a1f2e;
+          color: white;
+          border: 1px solid #4a90e2;
+        }
+
+        .dialog-buttons {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+        }
+
+        .dialog-buttons button {
+          padding: 8px 20px;
+          border-radius: 5px;
+          border: none;
+          cursor: pointer;
+        }
+
+        #confirm-upload {
+          background: #4a90e2;
+          color: white;
+        }
+
+        #cancel-upload {
+          background: #666;
+          color: white;
+        }
+
+        .meme-description {
+          color: white;
+          padding: 10px;
+          font-size: 1.1em;
+          text-align: center;
+          margin: 10px 0;
         }
       `}</style>
     </motion.div>
