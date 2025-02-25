@@ -376,6 +376,20 @@ function App() {
       variants={containerVariants}
       className="min-h-screen bg-gray-100"
     >
+      <div className="menu-container">
+        <nav className="categories-menu">
+          {categories.map(category => (
+            <button 
+              key={category.id}
+              className="category-button"
+              onClick={() => handleCategoryChange(category.id)}
+            >
+              {category.name}
+            </button>
+          ))}
+        </nav>
+      </div>
+
       <nav className="bg-black shadow-lg fixed w-full z-10">
         <motion.div 
           className="max-w-6xl mx-auto px-4 py-3"
@@ -459,42 +473,6 @@ function App() {
             </motion.div>
           </div>
         </motion.div>
-
-        <div className="border-t border-gray-800">
-          <div className="max-w-6xl mx-auto px-4">
-            <div className="flex space-x-8">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`py-3 flex items-center space-x-2 ${
-                  selectedCategory === 'all'
-                    ? 'text-blue-400 border-b-2 border-blue-400'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-                onClick={() => handleCategoryChange('all')}
-              >
-                <FaFolder />
-                <span>Todos</span>
-              </motion.button>
-              {categories.map(category => (
-                <motion.button
-                  key={category.id}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`py-3 flex items-center space-x-2 ${
-                    selectedCategory === category.id
-                      ? 'text-blue-400 border-b-2 border-blue-400'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
-                  onClick={() => handleCategoryChange(category.id)}
-                >
-                  <FaFolder />
-                  <span>{category.name}</span>
-                </motion.button>
-              ))}
-            </div>
-          </div>
-        </div>
       </nav>
 
       {showUploadModal && (
@@ -1004,6 +982,102 @@ function App() {
           }
         }
 
+        .menu-container {
+          width: 100%;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          margin-bottom: 20px;
+          position: sticky;
+          top: 0;
+          background: #1a1f2e;
+          z-index: 100;
+          padding: 10px 0;
+        }
+
+        .categories-menu {
+          display: flex;
+          gap: 10px;
+          padding: 0 15px;
+          min-width: min-content;
+        }
+
+        .category-button {
+          white-space: nowrap;
+          padding: 8px 16px;
+          border: none;
+          border-radius: 20px;
+          background: #2a2f3e;
+          color: white;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .category-button:hover,
+        .category-button.active {
+          background: #4a90e2;
+        }
+
+        /* Ocultar la barra de desplazamiento pero mantener la funcionalidad */
+        .menu-container::-webkit-scrollbar {
+          display: none;
+        }
+        
+        .menu-container {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+
+        @media (max-width: 768px) {
+          .menu-container {
+            padding: 10px 0;
+          }
+
+          .categories-menu {
+            padding: 0 10px;
+          }
+
+          .category-button {
+            padding: 6px 12px;
+            font-size: 14px;
+          }
+
+          .app {
+            padding: 0;
+          }
+
+          .meme-grid {
+            padding: 10px;
+            gap: 15px;
+          }
+
+          .meme-footer {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+          }
+
+          .actions {
+            width: 100%;
+            justify-content: space-between;
+          }
+
+          .upload-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+            border-radius: 30px;
+            padding: 12px 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+          }
+        }
+
+        @media (max-width: 480px) {
+          .category-button {
+            padding: 5px 10px;
+            font-size: 13px;
+          }
+        }
       `}</style>
     </motion.div>
   );
