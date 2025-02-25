@@ -1007,18 +1007,23 @@ function App() {
         .nav-menu {
           display: flex;
           background: #1a1f2e;
-          width: 100%;
-          overflow-x: auto;
+          overflow-x: scroll;
           -webkit-overflow-scrolling: touch;
-          white-space: nowrap;
-          padding: 15px 0;
+          scrollbar-width: none;
+          width: 100%;
+          position: relative;
+        }
+
+        .nav-menu > * {
+          flex: 0 0 auto;
+          margin-right: 20px;
         }
 
         .nav-link {
           color: #4a90e2;
           text-decoration: none;
-          padding: 0 15px;
-          flex-shrink: 0;  /* Evita que los enlaces se compriman */
+          white-space: nowrap;
+          display: inline-block;
         }
 
         .nav-menu::-webkit-scrollbar {
@@ -1028,7 +1033,12 @@ function App() {
         @media (max-width: 768px) {
           .nav-menu {
             -webkit-overflow-scrolling: touch;
-            padding: 15px 0;
+            padding: 15px;
+            gap: 0;
+          }
+          
+          .nav-menu > *:last-child {
+            margin-right: 15px;
           }
         }
       `}</style>
