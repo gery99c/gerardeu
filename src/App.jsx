@@ -1007,18 +1007,28 @@ function App() {
         .nav-menu {
           display: flex;
           background: #1a1f2e;
+          width: 100%;
           overflow-x: auto;
           -webkit-overflow-scrolling: touch;
-          scrollbar-width: none;  /* Firefox */
+          white-space: nowrap;
+          padding: 15px 0;
+        }
+
+        .nav-link {
+          color: #4a90e2;
+          text-decoration: none;
+          padding: 0 15px;
+          flex-shrink: 0;  /* Evita que los enlaces se compriman */
         }
 
         .nav-menu::-webkit-scrollbar {
-          display: none;  /* Chrome, Safari, Edge */
+          display: none;
         }
 
         @media (max-width: 768px) {
           .nav-menu {
             -webkit-overflow-scrolling: touch;
+            padding: 15px 0;
           }
         }
       `}</style>
