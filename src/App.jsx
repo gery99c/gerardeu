@@ -924,6 +924,34 @@ function App() {
         .like-button:active, .share-button:active {
           transform: scale(0.95);
         }
+
+        .meme-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+          gap: 16px;
+          padding: 16px;
+        }
+
+        .meme-card {
+          background: #2a2f3e;
+          border-radius: 8px;
+          overflow: hidden;
+        }
+
+        .meme-image-container {
+          position: relative;
+          width: 100%;
+          padding-top: 100%; /* Aspecto cuadrado 1:1 */
+        }
+
+        .meme-image-container img {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover; /* Mantiene la proporción y cubre el contenedor */
+        }
       `}</style>
     </motion.div>
   );
