@@ -912,12 +912,11 @@ function App() {
 
         .meme-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
-          gap: 30px;
-          margin-top: 20px;
-          max-width: 1600px;
+          grid-template-columns: repeat(auto-fit, minmax(800px, 1fr));
+          gap: 20px;
+          max-width: 1000px;
           margin: 0 auto;
-          padding: 0 20px;
+          padding: 0 15px;
         }
 
         .meme-card {
@@ -925,6 +924,7 @@ function App() {
           border-radius: 10px;
           overflow: hidden;
           box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          margin-bottom: 20px;
         }
 
         .meme-image-container {
@@ -936,9 +936,9 @@ function App() {
           width: 100%;
           height: auto;
           display: block;
-          min-height: 400px;
-          max-height: 800px;
+          min-height: 600px;
           object-fit: contain;
+          background: #1a1f2e;
         }
 
         .like-button, .share-button {
@@ -960,6 +960,16 @@ function App() {
 
         .like-button:active, .share-button:active {
           transform: scale(0.95);
+        }
+
+        @media (max-width: 850px) {
+          .meme-grid {
+            grid-template-columns: 1fr;
+          }
+          
+          .meme-image-container img {
+            min-height: 400px;
+          }
         }
       `}</style>
     </motion.div>
