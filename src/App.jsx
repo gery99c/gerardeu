@@ -940,19 +940,55 @@ function App() {
       <TestUpload />
 
       <style>{`
+        * {
+          -webkit-tap-highlight-color: transparent;
+          box-sizing: border-box;
+        }
+
+        body {
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          min-height: 100vh;
+          -webkit-text-size-adjust: 100%;
+        }
+
         .app {
           background: #1a1f2e;
           min-height: 100vh;
-          padding: 20px;
-          -webkit-text-size-adjust: 100%;
+          width: 100%;
+          max-width: 100%;
+          overflow-x: hidden;
+          padding: 10px;
+        }
+
+        .nav-menu {
+          display: flex;
+          background: #1a1f2e;
+          width: 100vw;
+          margin-left: -10px;
+          padding: 15px 10px;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          position: relative;
+        }
+
+        .nav-link {
+          color: #4a90e2;
+          text-decoration: none;
+          padding: 0 12px;
+          white-space: nowrap;
+          font-size: 14px;
+          flex: 0 0 auto;
         }
 
         .meme-grid {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 20px;
-          max-width: 800px;
-          margin: 0 auto;
+          gap: 15px;
+          width: 100%;
+          padding: 10px 0;
         }
 
         .meme-card {
@@ -963,121 +999,82 @@ function App() {
         }
 
         .meme-image-container {
-          width: 1200px;
-          margin: 0 auto;
+          width: 100%;
+          position: relative;
         }
 
         .meme-image-container img {
-          width: 1200px;
+          width: 100%;
           height: auto;
           display: block;
         }
 
-        .like-button, .share-button {
-          background: none;
-          border: none;
-          color: white;
-          cursor: pointer;
-          padding: 5px 10px;
-          font-size: 1.1em;
+        .meme-footer {
+          padding: 10px;
           display: flex;
+          justify-content: space-between;
           align-items: center;
-          gap: 5px;
-          transition: transform 0.1s;
+          flex-wrap: wrap;
+          gap: 10px;
         }
 
-        .like-button:hover, .share-button:hover {
-          transform: scale(1.1);
-        }
-
-        .like-button:active, .share-button:active {
-          transform: scale(0.95);
-        }
-
-        @media (max-width: 850px) {
-          .meme-grid {
-            max-width: 100%;
-          }
-
-          .meme-image-container,
-          .meme-image-container img {
-            width: 100%;
-          }
-        }
-
-        .nav-menu {
-          display: flex;
-          background: #1a1f2e;
+        .upload-button {
           width: 100%;
-          padding: 15px 5px;
-          overflow-x: auto;
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: none;
-          position: relative;
-          -webkit-user-select: none;
-          user-select: none;
-          margin: 0 -20px;  /* Compensar el padding del app */
-          padding-left: 20px;
-          padding-right: 20px;
-        }
-
-        .nav-link {
-          color: #4a90e2;
-          text-decoration: none;
-          padding: 0 15px;
-          white-space: nowrap;
+          max-width: 200px;
+          margin: 10px auto;
+          padding: 12px;
+          background: #4a90e2;
+          color: white;
+          border: none;
+          border-radius: 5px;
           font-size: 14px;
-          flex: 0 0 auto;
-          -webkit-tap-highlight-color: transparent;
         }
 
-        /* Ajustes específicos para iOS */
         @supports (-webkit-touch-callout: none) {
           .nav-menu {
             -webkit-overflow-scrolling: touch;
-            overflow-x: scroll;
           }
         }
 
-        @media (max-width: 768px) {
+        @media screen and (max-width: 768px) {
           .app {
             padding: 10px;
           }
 
           .nav-menu {
-            margin: 0 -10px;
-            padding-left: 10px;
-            padding-right: 10px;
-          }
-
-          .meme-grid {
-            padding: 0;
-            gap: 15px;
-          }
-
-          .meme-card {
-            margin: 0;
-          }
-
-          .meme-image-container img {
-            width: 100%;
-            height: auto;
+            margin-left: -10px;
+            width: 100vw;
+            padding: 15px 10px;
           }
 
           .meme-footer {
-            padding: 10px;
+            flex-direction: column;
+            align-items: flex-start;
+          }
+
+          .actions {
+            width: 100%;
+            justify-content: space-between;
           }
         }
 
-        @media (max-width: 480px) {
+        @media screen and (max-width: 480px) {
           .app {
             padding: 5px;
           }
 
           .nav-menu {
-            margin: 0 -5px;
-            padding-left: 5px;
-            padding-right: 5px;
+            margin-left: -5px;
+            padding: 15px 5px;
+          }
+
+          .nav-link {
+            padding: 0 10px;
+            font-size: 13px;
+          }
+
+          .meme-grid {
+            gap: 10px;
           }
         }
       `}</style>
