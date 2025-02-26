@@ -440,6 +440,31 @@ function App() {
                   </button>
                 </li>
               ))}
+              {/* Opciones adicionales para móvil */}
+              <li>
+                <button 
+                  onClick={() => { setShowNewsModal(true); setShowMobileMenu(false); }} 
+                  className="text-white py-2 block"
+                >
+                  Novedades
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => { setShowAboutModal(true); setShowMobileMenu(false); }} 
+                  className="text-white py-2 block"
+                >
+                  Información
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => { setShowPrivacyModal(true); setShowMobileMenu(false); }} 
+                  className="text-white py-2 block"
+                >
+                  Privacidad
+                </button>
+              </li>
             </ul>
           </nav>
         </div>
@@ -930,7 +955,7 @@ function App() {
                     <motion.img
                       src={meme.url}
                       alt={meme.description || 'Meme'}
-                      className="w-full h-48 sm:h-64 object-cover"
+                      className="w-full max-h-64 sm:max-h-80 object-contain"
                       whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.2 }}
                     />
