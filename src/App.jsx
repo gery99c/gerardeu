@@ -98,8 +98,6 @@ function App() {
         console.error('Error al cargar memes:', error);
         return;
       }
-
-      console.log('Memes cargados:', data);
       setMemes(data || []);
     } catch (error) {
       console.error('Error:', error);
@@ -158,19 +156,14 @@ function App() {
   const handleLike = async (memeId, currentLikes) => {
     try {
       const newLikes = (currentLikes || 0) + 1;
-      
       const { error } = await supabase
         .from('joy_images')
         .update({ likes: newLikes })
         .eq('id', memeId);
-
       if (error) throw error;
-
       setMemes(prevMemes =>
         prevMemes.map(meme =>
-          meme.id === memeId
-            ? { ...meme, likes: newLikes }
-            : meme
+          meme.id === memeId ? { ...meme, likes: newLikes } : meme
         )
       );
     } catch (error) {
@@ -191,27 +184,20 @@ function App() {
         await navigator.clipboard.writeText(memeUrl);
         alert('¡URL copiada al portapapeles!');
       }
-
       const { data: meme } = await supabase
         .from('joy_images')
         .select('shares')
         .eq('id', memeId)
         .single();
-
       const newShares = ((meme?.shares || 0) + 1);
-
       const { error } = await supabase
         .from('joy_images')
         .update({ shares: newShares })
         .eq('id', memeId);
-
       if (error) throw error;
-
       setMemes(prevMemes =>
         prevMemes.map(meme =>
-          meme.id === memeId
-            ? { ...meme, shares: newShares }
-            : meme
+          meme.id === memeId ? { ...meme, shares: newShares } : meme
         )
       );
     } catch (error) {
@@ -250,11 +236,7 @@ function App() {
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
-      transition: { 
-        duration: 0.5,
-        when: "beforeChildren",
-        staggerChildren: 0.1
-      }
+      transition: { duration: 0.5, when: "beforeChildren", staggerChildren: 0.1 }
     }
   };
 
@@ -274,11 +256,7 @@ function App() {
       opacity: 1,
       transition: { type: "spring", stiffness: 500, damping: 25 }
     },
-    exit: { 
-      scale: 0.8, 
-      opacity: 0,
-      transition: { duration: 0.2 }
-    }
+    exit: { scale: 0.8, opacity: 0, transition: { duration: 0.2 } }
   };
 
   const handleUploadClick = () => {
@@ -294,35 +272,21 @@ function App() {
       setUploading(true);
       const file = event.target.files?.[0];
       if (!file) return;
-
       const description = prompt('Introduce una descripción para el meme:') || 'Sin descripción';
       const category = prompt('Categoría (Divertidos, Programación, Gaming, Animales, Random):') || 'Random';
-
       const fileExt = file.name.split('.').pop();
       const fileName = `meme_${Date.now()}.${fileExt}`;
-
       const { error: storageError } = await supabase.storage
         .from('joy-images')
         .upload(fileName, file);
-
       if (storageError) throw storageError;
-
       const { data: { publicUrl } } = supabase.storage
         .from('joy-images')
         .getPublicUrl(fileName);
-
       const { error: dbError } = await supabase
         .from('joy_images')
-        .insert([{
-          url: publicUrl,
-          name: fileName,
-          category: category,
-          description: description,
-          likes: 0
-        }]);
-
+        .insert([{ url: publicUrl, name: fileName, category: category, description: description, likes: 0 }]);
       if (dbError) throw dbError;
-
       await loadMemes();
     } catch (error) {
       console.error('Error:', error);
@@ -346,14 +310,11 @@ function App() {
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
-
     setMessages(prev => [...prev, { type: 'user', text: inputMessage }]);
     const userMessage = inputMessage;
     setInputMessage('');
-
     setTimeout(() => {
       let botResponse = "¡Jaja! Muy bueno. ¿Quieres escuchar otro chiste?";
-      
       if (userMessage.toLowerCase().includes('sí') || userMessage.toLowerCase().includes('si')) {
         const jokes = [
           "¿Qué le dice un .gif a un .jpg? ¡Animate!",
@@ -363,18 +324,12 @@ function App() {
         ];
         botResponse = jokes[Math.floor(Math.random() * jokes.length)];
       }
-
       setMessages(prev => [...prev, { type: 'bot', text: botResponse }]);
     }, 1000);
   };
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-      className="min-h-screen bg-gray-100"
-    >
+    <motion.div initial="hidden" animate="visible" variants={containerVariants} className="min-h-screen bg-gray-100">
       {/* MENÚ MÓVIL */}
       <div className="md:hidden fixed top-0 left-0 right-0 bg-black shadow-lg z-10">
         <div className="flex items-center justify-between px-4 py-3">
@@ -423,45 +378,30 @@ function App() {
           <nav>
             <ul>
               <li>
-                <button 
-                  onClick={() => { handleCategoryChange('all'); setShowMobileMenu(false); }} 
-                  className="text-white py-2 block"
-                >
+                <button onClick={() => { handleCategoryChange('all'); setShowMobileMenu(false); }} className="text-white py-2 block">
                   Todos
                 </button>
               </li>
               {categories.map(category => (
                 <li key={category.id}>
-                  <button 
-                    onClick={() => { handleCategoryChange(category.id); setShowMobileMenu(false); }}
-                    className="text-white py-2 block"
-                  >
+                  <button onClick={() => { handleCategoryChange(category.id); setShowMobileMenu(false); }} className="text-white py-2 block">
                     {category.name}
                   </button>
                 </li>
               ))}
               {/* Opciones adicionales para móvil */}
               <li>
-                <button 
-                  onClick={() => { setShowNewsModal(true); setShowMobileMenu(false); }} 
-                  className="text-white py-2 block"
-                >
+                <button onClick={() => { setShowNewsModal(true); setShowMobileMenu(false); }} className="text-white py-2 block">
                   Novedades
                 </button>
               </li>
               <li>
-                <button 
-                  onClick={() => { setShowAboutModal(true); setShowMobileMenu(false); }} 
-                  className="text-white py-2 block"
-                >
+                <button onClick={() => { setShowAboutModal(true); setShowMobileMenu(false); }} className="text-white py-2 block">
                   Información
                 </button>
               </li>
               <li>
-                <button 
-                  onClick={() => { setShowPrivacyModal(true); setShowMobileMenu(false); }} 
-                  className="text-white py-2 block"
-                >
+                <button onClick={() => { setShowPrivacyModal(true); setShowMobileMenu(false); }} className="text-white py-2 block">
                   Privacidad
                 </button>
               </li>
@@ -472,10 +412,7 @@ function App() {
 
       {/* MENÚ DE ESCRITORIO */}
       <nav className="hidden md:block bg-black shadow-lg fixed w-full z-10">
-        <motion.div 
-          className="max-w-6xl mx-auto px-4 py-3"
-          variants={itemVariants}
-        >
+        <motion.div className="max-w-6xl mx-auto px-4 py-3" variants={itemVariants}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="flex items-center">
@@ -484,7 +421,6 @@ function App() {
                 </button>
                 <h1 className="text-2xl font-bold text-white">JoyFinder</h1>
               </div>
-              
               <div className="relative">
                 <input
                   type="text"
@@ -496,56 +432,36 @@ function App() {
                 <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               </div>
             </div>
-
             <div className="flex items-center space-x-6">
-              <button
-                className="text-white hover:text-blue-400 transition-colors"
-                onClick={() => setShowNewsModal(true)}
-              >
+              <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowNewsModal(true)}>
                 <FaBullhorn className="text-xl" />
               </button>
-              <button
-                className="text-white hover:text-blue-400 transition-colors"
-                onClick={() => setShowCollaborateModal(true)}
-              >
+              <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowCollaborateModal(true)}>
                 <FaHandsHelping className="text-xl" />
               </button>
               <input
                 type="file"
                 ref={fileInputRef}
-                onChange={handleFileSelected}
+                onChange={handleFileSelect}
                 accept="image/*"
                 className="hidden"
               />
-              <button
-                className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-                onClick={handleUploadClick}
-              >
-                <span className="upload-icon">
-                  {uploading ? '📤' : '⬆️'}
-                </span>
-                <span className="upload-text">
-                  {uploading ? 'Subiendo...' : 'Subir Meme'}
-                </span>
+              <button className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" onClick={handleUploadClick}>
+                <span className="upload-icon">{uploading ? '📤' : '⬆️'}</span>
+                <span className="upload-text">{uploading ? 'Subiendo...' : 'Subir Meme'}</span>
               </button>
-              <button
-                className="text-white hover:text-blue-400 transition-colors"
-                onClick={() => setShowAboutModal(true)}
-              >
+              <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowAboutModal(true)}>
                 <FaInfoCircle className="text-xl" />
               </button>
             </div>
           </div>
         </motion.div>
-
         <div className="border-t border-gray-800">
           <div className="max-w-6xl mx-auto px-4">
             <div className="flex space-x-8">
               <button
                 className={`py-3 flex items-center space-x-2 ${
-                  selectedCategory === 'all'
-                    ? 'text-blue-400 border-b-2 border-blue-400'
-                    : 'text-gray-400 hover:text-white'
+                  selectedCategory === 'all' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400 hover:text-white'
                 }`}
                 onClick={() => handleCategoryChange('all')}
               >
@@ -556,9 +472,7 @@ function App() {
                 <button
                   key={category.id}
                   className={`py-3 flex items-center space-x-2 ${
-                    selectedCategory === category.id
-                      ? 'text-blue-400 border-b-2 border-blue-400'
-                      : 'text-gray-400 hover:text-white'
+                    selectedCategory === category.id ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400 hover:text-white'
                   }`}
                   onClick={() => handleCategoryChange(category.id)}
                 >
@@ -574,33 +488,18 @@ function App() {
       {/* MODALES */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div 
-            initial="hidden" 
-            animate="visible" 
-            exit="exit" 
-            variants={modalVariants} 
-            className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4"
-          >
+          <motion.div initial="hidden" animate="visible" exit="exit" variants={modalVariants} className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">Subir nuevo meme</h3>
-              <button 
-                onClick={() => setShowUploadModal(false)}
-                className="text-gray-400 hover:text-white"
-              >
+              <button onClick={() => setShowUploadModal(false)} className="text-gray-400 hover:text-white">
                 <FaTimes />
               </button>
             </div>
-            
             {previewUrl && (
               <div className="mb-4 rounded-lg overflow-hidden">
-                <img 
-                  src={previewUrl} 
-                  alt="Preview" 
-                  className="w-full object-contain max-h-64"
-                />
+                <img src={previewUrl} alt="Preview" className="w-full object-contain max-h-64" />
               </div>
             )}
-            
             <input
               type="text"
               placeholder="Título del meme"
@@ -608,7 +507,6 @@ function App() {
               onChange={(e) => setNewMemeTitle(e.target.value)}
               className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 mb-4"
             />
-
             <select
               value={newMemeCategory}
               onChange={(e) => setNewMemeCategory(e.target.value)}
@@ -621,19 +519,11 @@ function App() {
                 </option>
               ))}
             </select>
-            
             <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowUploadModal(false)}
-                className="px-4 py-2 text-gray-400 hover:text-white"
-              >
+              <button onClick={() => setShowUploadModal(false)} className="px-4 py-2 text-gray-400 hover:text-white">
                 Cancelar
               </button>
-              <button
-                onClick={handleUploadMeme}
-                disabled={!newMemeTitle.trim() || !selectedFile || !newMemeCategory}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
-              >
+              <button onClick={handleUploadMeme} disabled={!newMemeTitle.trim() || !selectedFile || !newMemeCategory} className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition disabled:opacity-50">
                 Publicar
               </button>
             </div>
@@ -643,47 +533,26 @@ function App() {
 
       {showAboutModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div 
-            initial="hidden" 
-            animate="visible" 
-            exit="exit" 
-            variants={modalVariants} 
-            className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4"
-          >
+          <motion.div initial="hidden" animate="visible" exit="exit" variants={modalVariants} className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">Sobre JoyFinder</h3>
-              <button 
-                onClick={() => setShowAboutModal(false)}
-                className="text-gray-400 hover:text-white"
-              >
+              <button onClick={() => setShowAboutModal(false)} className="text-gray-400 hover:text-white">
                 <FaTimes />
               </button>
             </div>
-            
             <div className="text-white">
               <p className="mb-4">
-                JoyFinder es una plataforma dedicada a compartir y disfrutar de memes con humor blanco. 
-                Nuestro objetivo es crear un espacio divertido y respetuoso donde todos puedan reír sin 
-                ofender a nadie.
+                JoyFinder es una plataforma dedicada a compartir y disfrutar de memes con humor blanco. Nuestro objetivo es crear un espacio divertido y respetuoso donde todos puedan reír sin ofender a nadie.
               </p>
               <p className="mb-4">
-                Aquí podrás encontrar y compartir memes de diferentes categorías, siempre manteniendo 
-                un ambiente positivo y familiar.
+                Aquí podrás encontrar y compartir memes de diferentes categorías, siempre manteniendo un ambiente positivo y familiar.
               </p>
               <div className="flex flex-col items-center gap-4 mt-8">
-                <button
-                  onClick={() => {
-                    setShowAboutModal(false);
-                    setShowPrivacyModal(true);
-                  }}
-                  className="text-blue-400 hover:text-blue-300 flex items-center gap-2"
-                >
+                <button onClick={() => { setShowAboutModal(false); setShowPrivacyModal(true); }} className="text-blue-400 hover:text-blue-300 flex items-center gap-2">
                   <FaShieldAlt />
                   <span>Política de Privacidad</span>
                 </button>
-                <div className="text-gray-400">
-                  Created by GERARDEU
-                </div>
+                <div className="text-gray-400">Created by GERARDEU</div>
               </div>
             </div>
           </motion.div>
@@ -692,94 +561,64 @@ function App() {
 
       {showPrivacyModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div 
-            initial="hidden" 
-            animate="visible" 
-            exit="exit" 
-            variants={modalVariants} 
-            className="bg-gray-800 p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"
-          >
+          <motion.div initial="hidden" animate="visible" exit="exit" variants={modalVariants} className="bg-gray-800 p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">Política de Privacidad</h3>
-              <button 
-                onClick={() => setShowPrivacyModal(false)}
-                className="text-gray-400 hover:text-white"
-              >
+              <button onClick={() => setShowPrivacyModal(false)} className="text-gray-400 hover:text-white">
                 <FaTimes />
               </button>
             </div>
-            
             <div className="text-white space-y-4">
               <section>
                 <h4 className="text-lg font-semibold mb-2">1. Información que Recopilamos</h4>
-                <p>
-                  En JoyFinder, solo almacenamos la siguiente información:
-                </p>
+                <p>En JoyFinder, solo almacenamos la siguiente información:</p>
                 <ul className="list-disc ml-6 mt-2">
                   <li>Los memes que subes, incluyendo títulos y categorías</li>
                   <li>Los "me gusta" que das a los memes</li>
                   <li>Datos almacenados localmente en tu navegador</li>
                 </ul>
               </section>
-
               <section>
                 <h4 className="text-lg font-semibold mb-2">2. Uso de la Información</h4>
-                <p>
-                  Utilizamos esta información únicamente para:
-                </p>
+                <p>Utilizamos esta información únicamente para:</p>
                 <ul className="list-disc ml-6 mt-2">
                   <li>Mostrar los memes en la plataforma</li>
                   <li>Mantener un registro de los "me gusta"</li>
                   <li>Mejorar la experiencia del usuario</li>
                 </ul>
               </section>
-
               <section>
                 <h4 className="text-lg font-semibold mb-2">3. Almacenamiento Local</h4>
-                <p>
-                  JoyFinder utiliza el almacenamiento local del navegador para guardar:
-                </p>
+                <p>JoyFinder utiliza el almacenamiento local del navegador para guardar:</p>
                 <ul className="list-disc ml-6 mt-2">
                   <li>Tus memes subidos</li>
                   <li>Preferencias de usuario</li>
                   <li>Datos de la sesión actual</li>
                 </ul>
               </section>
-
               <section>
                 <h4 className="text-lg font-semibold mb-2">4. Compartir Contenido</h4>
-                <p>
-                  Al subir contenido a JoyFinder:
-                </p>
+                <p>Al subir contenido a JoyFinder:</p>
                 <ul className="list-disc ml-6 mt-2">
                   <li>Confirmas que tienes derecho a compartir ese contenido</li>
                   <li>Entiendes que será visible para otros usuarios</li>
                   <li>Aceptas que el contenido debe ser apropiado y respetar nuestras normas de humor blanco</li>
                 </ul>
               </section>
-
               <section>
                 <h4 className="text-lg font-semibold mb-2">5. Seguridad</h4>
-                <p>
-                  Nos comprometemos a:
-                </p>
+                <p>Nos comprometemos a:</p>
                 <ul className="list-disc ml-6 mt-2">
                   <li>Mantener tu información segura</li>
                   <li>No compartir datos con terceros</li>
                   <li>Usar el almacenamiento local de forma responsable</li>
                 </ul>
               </section>
-
               <section>
                 <h4 className="text-lg font-semibold mb-2">6. Contacto</h4>
-                <p>
-                  Si tienes preguntas sobre nuestra política de privacidad, puedes contactar con nosotros a través de los canales oficiales de JoyFinder.
-                </p>
+                <p>Si tienes preguntas sobre nuestra política de privacidad, puedes contactar con nosotros a través de los canales oficiales de JoyFinder.</p>
               </section>
-
-              <div className="text-sm text-gray-400 mt-8">
-                Última actualización: {new Date().toLocaleDateString()}
-              </div>
+              <div className="text-sm text-gray-400 mt-8">Última actualización: {new Date().toLocaleDateString()}</div>
             </div>
           </motion.div>
         </div>
@@ -787,26 +626,16 @@ function App() {
 
       {showNewsModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div 
-            initial="hidden" 
-            animate="visible" 
-            exit="exit" 
-            variants={modalVariants} 
-            className="bg-gray-800 p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"
-          >
+          <motion.div initial="hidden" animate="visible" exit="exit" variants={modalVariants} className="bg-gray-800 p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-2xl font-bold text-white">Novedades de la Comunidad</h3>
                 <p className="text-gray-400 text-sm">Mantente al día con las últimas actualizaciones</p>
               </div>
-              <button 
-                onClick={() => setShowNewsModal(false)}
-                className="text-gray-400 hover:text-white"
-              >
+              <button onClick={() => setShowNewsModal(false)} className="text-gray-400 hover:text-white">
                 <FaTimes />
               </button>
             </div>
-            
             <div className="space-y-6">
               {newsUpdates.map((update) => (
                 <div key={update.id} className="bg-gray-700 rounded-lg p-4 space-y-3">
@@ -828,11 +657,7 @@ function App() {
                       {update.tag}
                     </span>
                   </div>
-                  
-                  <p className="text-gray-300 text-sm leading-relaxed">
-                    {update.content}
-                  </p>
-                  
+                  <p className="text-gray-300 text-sm leading-relaxed">{update.content}</p>
                   <div className="flex items-center gap-4 pt-2">
                     <button className="text-gray-400 hover:text-blue-400 transition-colors text-sm flex items-center gap-2">
                       <FaHeart />
@@ -852,77 +677,37 @@ function App() {
 
       {showCollaborateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div 
-            initial="hidden" 
-            animate="visible" 
-            exit="exit" 
-            variants={modalVariants} 
-            className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4"
-          >
+          <motion.div initial="hidden" animate="visible" exit="exit" variants={modalVariants} className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">Colabora con Nosotros</h3>
-              <button 
-                onClick={() => setShowCollaborateModal(false)}
-                className="text-gray-400 hover:text-white"
-              >
+              <button onClick={() => setShowCollaborateModal(false)} className="text-gray-400 hover:text-white">
                 <FaTimes />
               </button>
             </div>
-            
             <div className="text-white space-y-6">
-              <p>
-                ¡Únete a nuestra comunidad y ayúdanos a hacer de JoyFinder un lugar aún mejor! 
-                Puedes encontrarnos en:
-              </p>
-
+              <p>¡Únete a nuestra comunidad y ayúdanos a hacer de JoyFinder un lugar aún mejor! Puedes encontrarnos en:</p>
               <div className="space-y-4">
-                <a 
-                  href="https://twitter.com/joyfinder" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-gray-300 hover:text-blue-400 transition-colors"
-                >
+                <a href="https://twitter.com/joyfinder" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-300 hover:text-blue-400 transition-colors">
                   <FaTwitter className="text-2xl" />
                   <span>Twitter</span>
                 </a>
-                
-                <a 
-                  href="https://instagram.com/joyfinder" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-gray-300 hover:text-pink-400 transition-colors"
-                >
+                <a href="https://instagram.com/joyfinder" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-300 hover:text-pink-400 transition-colors">
                   <FaInstagram className="text-2xl" />
                   <span>Instagram</span>
                 </a>
-                
-                <a 
-                  href="https://github.com/joyfinder" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors"
-                >
+                <a href="https://github.com/joyfinder" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors">
                   <FaGithub className="text-2xl" />
                   <span>GitHub</span>
                 </a>
-                
-                <a 
-                  href="https://discord.gg/joyfinder" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-gray-300 hover:text-purple-400 transition-colors"
-                >
+                <a href="https://discord.gg/joyfinder" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-300 hover:text-purple-400 transition-colors">
                   <FaDiscord className="text-2xl" />
                   <span>Discord</span>
                 </a>
               </div>
-
               <div className="mt-6 p-4 bg-gray-700 rounded-lg">
                 <h4 className="font-semibold mb-2">¿Quieres colaborar?</h4>
                 <p className="text-sm text-gray-300">
-                  Si tienes ideas para mejorar JoyFinder o quieres contribuir al desarrollo, 
-                  únete a nuestro servidor de Discord o contáctanos a través de cualquiera 
-                  de nuestras redes sociales.
+                  Si tienes ideas para mejorar JoyFinder o quieres contribuir al desarrollo, únete a nuestro servidor de Discord o contáctanos a través de nuestras redes sociales.
                 </p>
               </div>
             </div>
@@ -933,10 +718,7 @@ function App() {
       {/* CONTENIDO PRINCIPAL */}
       <div className="pt-20 min-h-screen bg-gray-900">
         <div className="max-w-6xl mx-auto px-4 py-8">
-          <motion.div 
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-            variants={itemVariants}
-          >
+          <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" variants={itemVariants}>
             <AnimatePresence mode="wait">
               {filteredMemes.map(meme => (
                 <motion.div
@@ -945,17 +727,14 @@ function App() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  whileHover={{ 
-                    y: -5, 
-                    transition: { duration: 0.2 }
-                  }}
+                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
                   className="bg-gray-800 rounded-xl overflow-hidden shadow-lg"
                 >
                   <div className="relative">
                     <motion.img
                       src={meme.url}
                       alt={meme.description || 'Meme'}
-                      className="w-full max-h-64 sm:max-h-80 object-contain"
+                      className="w-full object-contain h-auto max-h-[calc(100vh-150px)] sm:max-h-80"
                       whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.2 }}
                     />
@@ -963,22 +742,15 @@ function App() {
                       <h3 className="text-white text-lg font-semibold">{meme.description || 'Sin descripción'}</h3>
                     </div>
                   </div>
-
                   <div className="p-4">
                     <div className="flex justify-between items-center">
                       <span className="text-blue-400 text-sm">{meme.category}</span>
                       <div className="flex items-center space-x-4">
-                        <button
-                          className="text-red-500 hover:text-red-600"
-                          onClick={() => handleLike(meme.id, meme.likes)}
-                        >
+                        <button className="text-red-500 hover:text-red-600" onClick={() => handleLike(meme.id, meme.likes)}>
                           <FaHeart />
                           <span className="ml-1">{meme.likes || 0}</span>
                         </button>
-                        <button
-                          className="text-blue-400 hover:text-blue-500"
-                          onClick={() => handleShare(meme.id, meme.url)}
-                        >
+                        <button className="text-blue-400 hover:text-blue-500" onClick={() => handleShare(meme.id, meme.url)}>
                           <FaShare />
                         </button>
                       </div>
@@ -999,7 +771,6 @@ function App() {
           min-height: 100vh;
           padding: 20px;
         }
-
         .meme-grid {
           display: grid;
           grid-template-columns: 1fr;
@@ -1007,25 +778,21 @@ function App() {
           max-width: 800px;
           margin: 0 auto;
         }
-
         .meme-card {
           width: 100%;
           background: #2a2f3e;
           border-radius: 10px;
           overflow: hidden;
         }
-
         .meme-image-container {
           width: 1200px;
           margin: 0 auto;
         }
-
         .meme-image-container img {
           width: 1200px;
           height: auto;
           display: block;
         }
-
         .like-button, .share-button {
           background: none;
           border: none;
@@ -1038,26 +805,21 @@ function App() {
           gap: 5px;
           transition: transform 0.1s;
         }
-
         .like-button:hover, .share-button:hover {
           transform: scale(1.1);
         }
-
         .like-button:active, .share-button:active {
           transform: scale(0.95);
         }
-
         @media (max-width: 850px) {
           .meme-grid {
             max-width: 100%;
           }
-
           .meme-image-container,
           .meme-image-container img {
             width: 100%;
           }
         }
-
         .nav-menu {
           display: flex;
           background: #1a1f2e;
@@ -1072,11 +834,9 @@ function App() {
           user-select: none;
           cursor: grab;
         }
-
         .nav-menu:active {
           cursor: grabbing;
         }
-
         .nav-link {
           color: #4a90e2;
           text-decoration: none;
@@ -1087,13 +847,11 @@ function App() {
           display: inline-block;
           -webkit-tap-highlight-color: transparent;
         }
-
         .nav-menu::-webkit-scrollbar {
           display: none;
           width: 0;
           height: 0;
         }
-
         @media (max-width: 768px) {
           .nav-menu {
             overflow-x: scroll !important;
@@ -1105,7 +863,6 @@ function App() {
             padding: 15px 5px;
             gap: 0;
           }
-          
           .nav-link {
             padding: 0 10px;
             font-size: 14px;
@@ -1118,3 +875,4 @@ function App() {
 }
 
 export default App;
+
