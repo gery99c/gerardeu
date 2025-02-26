@@ -944,6 +944,7 @@ function App() {
           background: #1a1f2e;
           min-height: 100vh;
           padding: 20px;
+          -webkit-text-size-adjust: 100%;
         }
 
         .meme-grid {
@@ -1009,18 +1010,15 @@ function App() {
           background: #1a1f2e;
           width: 100%;
           padding: 15px 5px;
-          overflow-x: scroll !important;
+          overflow-x: auto;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
           position: relative;
-          touch-action: pan-x;
           -webkit-user-select: none;
           user-select: none;
-          cursor: grab;
-        }
-
-        .nav-menu:active {
-          cursor: grabbing;
+          margin: 0 -20px;  /* Compensar el padding del app */
+          padding-left: 20px;
+          padding-right: 20px;
         }
 
         .nav-link {
@@ -1030,32 +1028,56 @@ function App() {
           white-space: nowrap;
           font-size: 14px;
           flex: 0 0 auto;
-          display: inline-block;
           -webkit-tap-highlight-color: transparent;
         }
 
-        .nav-menu::-webkit-scrollbar {
-          display: none;
-          width: 0;
-          height: 0;
+        /* Ajustes específicos para iOS */
+        @supports (-webkit-touch-callout: none) {
+          .nav-menu {
+            -webkit-overflow-scrolling: touch;
+            overflow-x: scroll;
+          }
         }
 
         @media (max-width: 768px) {
-          .nav-menu {
-            overflow-x: scroll !important;
-            -webkit-overflow-scrolling: touch !important;
-            scroll-behavior: smooth;
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-            flex-wrap: nowrap;
-            padding: 15px 5px;
-            gap: 0;
+          .app {
+            padding: 10px;
           }
-          
-          .nav-link {
-            padding: 0 10px;
-            font-size: 14px;
-            pointer-events: auto;
+
+          .nav-menu {
+            margin: 0 -10px;
+            padding-left: 10px;
+            padding-right: 10px;
+          }
+
+          .meme-grid {
+            padding: 0;
+            gap: 15px;
+          }
+
+          .meme-card {
+            margin: 0;
+          }
+
+          .meme-image-container img {
+            width: 100%;
+            height: auto;
+          }
+
+          .meme-footer {
+            padding: 10px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .app {
+            padding: 5px;
+          }
+
+          .nav-menu {
+            margin: 0 -5px;
+            padding-left: 5px;
+            padding-right: 5px;
           }
         }
       `}</style>
