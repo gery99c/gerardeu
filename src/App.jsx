@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  FaHeart, FaShare, FaHome, FaSearch,
-  FaBullhorn, FaInfoCircle, FaShieldAlt,
-  FaFolder, FaTimes
+import { 
+  FaHeart, FaShare, FaHome, FaSearch, 
+  FaHandsHelping, FaUpload, FaTimes, FaFolder, FaInfoCircle, FaShieldAlt,
+  FaBullhorn, FaTwitter, FaInstagram, FaGithub, FaDiscord, FaBars
 } from 'react-icons/fa';
 import TestUpload from './components/TestUpload';
 import { createClient } from '@supabase/supabase-js';
@@ -72,8 +72,17 @@ function App() {
   const [previewUrl, setPreviewUrl] = useState('');
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [messages, setMessages] = useState([
+    { type: 'bot', text: '¡Hola! Soy JoyBot 😄 ¿Quieres que te cuente un chiste?' }
+  ]);
+  const [inputMessage, setInputMessage] = useState('');
+  const chatEndRef = useRef(null);
 
-  // Carga inicial de memes
+  // Estados para menú y búsqueda móvil
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
+
   useEffect(() => {
     loadMemes();
   }, []);
@@ -96,7 +105,7 @@ function App() {
   };
 
   const filteredMemes = memes.filter(meme => {
-    const matchesSearch = meme.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+    const matchesSearch = meme.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || meme.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -109,7 +118,6 @@ function App() {
     }
   }, [filteredMemes, currentIndex]);
 
-  // Subida de imagenes: ahora se permite seleccionar el archivo sin validar la categoría
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file && file.type.startsWith('image/')) {
@@ -127,8 +135,8 @@ function App() {
     if (selectedFile && newMemeTitle.trim() && newMemeCategory) {
       const newMeme = {
         id: Date.now(),
-        url: previewUrl,
-        name: newMemeTitle,
+        imageUrl: previewUrl,
+        title: newMemeTitle,
         category: newMemeCategory,
         likes: 0
       };
@@ -145,12 +153,6 @@ function App() {
     }
   };
 
-  // Ahora el botón de subir imagen no exige categoría previa
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  // Like
   const handleLike = async (memeId, currentLikes) => {
     try {
       const newLikes = (currentLikes || 0) + 1;
@@ -170,7 +172,6 @@ function App() {
     }
   };
 
-  // Share
   const handleShare = async (memeId, memeUrl) => {
     try {
       if (navigator.share) {
@@ -195,7 +196,9 @@ function App() {
         .eq('id', memeId);
       if (error) throw error;
       setMemes(prevMemes =>
-        prevMemes.map(m => m.id === memeId ? { ...m, shares: newShares } : m)
+        prevMemes.map(meme =>
+          meme.id === memeId ? { ...meme, shares: newShares } : meme
+        )
       );
     } catch (error) {
       console.error('Error al compartir:', error);
@@ -203,9 +206,21 @@ function App() {
     }
   };
 
-  // Cambio de categoría
+  const nextMeme = () => {
+    if (currentIndex < filteredMemes.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    }
+  };
+
+  const previousMeme = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+    }
+  };
+
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
+    setCurrentIndex(0);
   };
 
   const formatDate = (dateString) => {
@@ -216,74 +231,197 @@ function App() {
     });
   };
 
-  const modalVariants = {
-    hidden: { scale: 0.8, opacity: 0 },
-    visible: {
-      scale: 1,
+  // Variantes de animación
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
       opacity: 1,
-      transition: { type: 'spring', stiffness: 500, damping: 25 }
-    },
-    exit: {
-      scale: 0.8,
-      opacity: 0,
-      transition: { duration: 0.2 }
+      transition: { duration: 0.5, when: "beforeChildren", staggerChildren: 0.1 }
     }
   };
 
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { type: "spring", stiffness: 300, damping: 24 }
+    }
+  };
+
+  const modalVariants = {
+    hidden: { scale: 0.8, opacity: 0 },
+    visible: { 
+      scale: 1, 
+      opacity: 1,
+      transition: { type: "spring", stiffness: 500, damping: 25 }
+    },
+    exit: { scale: 0.8, opacity: 0, transition: { duration: 0.2 } }
+  };
+
+  const handleUploadClick = () => {
+    if (!selectedCategory) {
+      alert('Por favor, selecciona una categoría');
+      return;
+    }
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = async (event) => {
+    try {
+      setUploading(true);
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const description = prompt('Introduce una descripción para el meme:') || 'Sin descripción';
+      const category = prompt('Categoría (Divertidos, Programación, Gaming, Animales, Random):') || 'Random';
+      const fileExt = file.name.split('.').pop();
+      const fileName = `meme_${Date.now()}.${fileExt}`;
+      const { error: storageError } = await supabase.storage
+        .from('joy-images')
+        .upload(fileName, file);
+      if (storageError) throw storageError;
+      const { data: { publicUrl } } = supabase.storage
+        .from('joy-images')
+        .getPublicUrl(fileName);
+      const { error: dbError } = await supabase
+        .from('joy_images')
+        .insert([{ url: publicUrl, name: fileName, category: category, description: description, likes: 0 }]);
+      if (dbError) throw dbError;
+      await loadMemes();
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al subir el meme: ' + error.message);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // Función para auto-scroll del chat
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim()) return;
+    setMessages(prev => [...prev, { type: 'user', text: inputMessage }]);
+    const userMessage = inputMessage;
+    setInputMessage('');
+    setTimeout(() => {
+      let botResponse = "¡Jaja! Muy bueno. ¿Quieres escuchar otro chiste?";
+      if (userMessage.toLowerCase().includes('sí') || userMessage.toLowerCase().includes('si')) {
+        const jokes = [
+          "¿Qué le dice un .gif a un .jpg? ¡Animate!",
+          "¿Por qué los programadores prefieren el frío? Porque tienen muchos bugs",
+          "¿Qué le dice un bit al otro? Nos vemos en el bus",
+          "¿Por qué el programador se quedó colgado? Porque perdió el control",
+        ];
+        botResponse = jokes[Math.floor(Math.random() * jokes.length)];
+      }
+      setMessages(prev => [...prev, { type: 'bot', text: botResponse }]);
+    }, 1000);
+  };
+
   return (
-    <motion.div className="min-h-screen bg-gray-900 text-white">
-      {/* Navbar móvil: muestra buscador y botones para Novedades, Info y Privacidad */}
+    <motion.div initial="hidden" animate="visible" variants={containerVariants} className="min-h-screen bg-gray-100">
+      {/* MENÚ MÓVIL */}
       <div className="md:hidden fixed top-0 left-0 right-0 bg-black shadow-lg z-10">
-        <div className="flex flex-col px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <FaHome className="text-2xl" />
-              <h1 className="text-2xl font-bold">JoyFinder</h1>
-            </div>
-            <button onClick={handleUploadClick} className="bg-blue-600 px-3 py-1 rounded-full">
-              Subir Meme
-            </button>
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center">
+            <FaHome className="text-white text-2xl mr-2" />
+            <h1 className="text-2xl font-bold text-white">JoyFinder</h1>
           </div>
-          <div className="mt-2">
-            <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar memes..."
-                className="pl-10 pr-4 py-2 w-full rounded-full bg-gray-800 focus:outline-none"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="mt-2 flex justify-around">
-            <button onClick={() => setShowNewsModal(true)} className="flex flex-col items-center">
-              <FaBullhorn className="text-xl hover:text-blue-400 transition-colors" />
-              <span className="text-xs">Novedades</span>
+          <div className="flex items-center">
+            <button onClick={() => setShowMobileSearch(true)} className="text-white mr-4">
+              <FaSearch />
             </button>
-            <button onClick={() => setShowAboutModal(true)} className="flex flex-col items-center">
-              <FaInfoCircle className="text-xl hover:text-blue-400 transition-colors" />
-              <span className="text-xs">Info</span>
-            </button>
-            <button onClick={() => setShowPrivacyModal(true)} className="flex flex-col items-center">
-              <FaShieldAlt className="text-xl hover:text-blue-400 transition-colors" />
-              <span className="text-xs">Privacidad</span>
+            <button onClick={() => setShowMobileMenu(true)} className="text-white">
+              <FaBars />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Navbar escritorio */}
+      {/* BUSCADOR MÓVIL */}
+      {showMobileSearch && (
+        <div className="fixed top-0 left-0 right-0 bg-black p-4 z-20">
+          <div className="flex items-center">
+            <input
+              type="text"
+              placeholder="Buscar memes..."
+              className="w-full bg-gray-800 text-white rounded-full px-4 py-2 focus:outline-none"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <button onClick={() => setShowMobileSearch(false)} className="text-white ml-2">
+              <FaTimes />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MENÚ DESPLEGABLE MÓVIL */}
+      {showMobileMenu && (
+        <div className="fixed top-0 left-0 right-0 bg-black p-4 z-20">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-white text-lg">Menú</h2>
+            <button onClick={() => setShowMobileMenu(false)} className="text-white">
+              <FaTimes />
+            </button>
+          </div>
+          <nav>
+            <ul>
+              <li>
+                <button onClick={() => { handleCategoryChange('all'); setShowMobileMenu(false); }} className="text-white py-2 block">
+                  Todos
+                </button>
+              </li>
+              {categories.map(category => (
+                <li key={category.id}>
+                  <button onClick={() => { handleCategoryChange(category.id); setShowMobileMenu(false); }} className="text-white py-2 block">
+                    {category.name}
+                  </button>
+                </li>
+              ))}
+              {/* Opciones adicionales para móvil */}
+              <li>
+                <button onClick={() => { setShowNewsModal(true); setShowMobileMenu(false); }} className="text-white py-2 block">
+                  Novedades
+                </button>
+              </li>
+              <li>
+                <button onClick={() => { setShowAboutModal(true); setShowMobileMenu(false); }} className="text-white py-2 block">
+                  Información
+                </button>
+              </li>
+              <li>
+                <button onClick={() => { setShowPrivacyModal(true); setShowMobileMenu(false); }} className="text-white py-2 block">
+                  Privacidad
+                </button>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      )}
+
+      {/* MENÚ DE ESCRITORIO */}
       <nav className="hidden md:block bg-black shadow-lg fixed w-full z-10">
-        <motion.div className="max-w-6xl mx-auto px-4 py-3">
+        <motion.div className="max-w-6xl mx-auto px-4 py-3" variants={itemVariants}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="flex items-center">
-                <FaHome className="text-2xl mr-2" />
-                <h1 className="text-2xl font-bold">JoyFinder</h1>
+                <button className="text-white text-2xl mr-2">
+                  <FaHome />
+                </button>
+                <h1 className="text-2xl font-bold text-white">JoyFinder</h1>
               </div>
               <div className="relative">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Buscar memes..."
@@ -291,17 +429,15 @@ function App() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               </div>
             </div>
             <div className="flex items-center space-x-6">
-              <button onClick={() => setShowNewsModal(true)}>
-                <FaBullhorn className="text-xl hover:text-blue-400 transition-colors" />
+              <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowNewsModal(true)}>
+                <FaBullhorn className="text-xl" />
               </button>
-              <button onClick={() => setShowAboutModal(true)}>
-                <FaInfoCircle className="text-xl hover:text-blue-400 transition-colors" />
-              </button>
-              <button onClick={() => setShowPrivacyModal(true)}>
-                <FaShieldAlt className="text-xl hover:text-blue-400 transition-colors" />
+              <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowCollaborateModal(true)}>
+                <FaHandsHelping className="text-xl" />
               </button>
               <input
                 type="file"
@@ -310,119 +446,58 @@ function App() {
                 accept="image/*"
                 className="hidden"
               />
-              <button
-                className="bg-blue-600 px-3 py-1 rounded-full hover:bg-blue-500 transition"
-                onClick={handleUploadClick}
-              >
-                Subir Meme
+              <button className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" onClick={handleUploadClick}>
+                <span className="upload-icon">{uploading ? '📤' : '⬆️'}</span>
+                <span className="upload-text">{uploading ? 'Subiendo...' : 'Subir Meme'}</span>
+              </button>
+              <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowAboutModal(true)}>
+                <FaInfoCircle className="text-xl" />
               </button>
             </div>
           </div>
         </motion.div>
-        <div className="border-t border-gray-700">
-          <div className="flex overflow-x-auto px-4 py-2 space-x-4">
-            <button
-              className={`whitespace-nowrap px-3 py-1 rounded ${
-                selectedCategory === 'all'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-              }`}
-              onClick={() => handleCategoryChange('all')}
-            >
-              Todos
-            </button>
-            {categories.map((cat) => (
+        <div className="border-t border-gray-800">
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="flex space-x-8">
               <button
-                key={cat.id}
-                className={`whitespace-nowrap px-3 py-1 rounded ${
-                  selectedCategory === cat.id
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                className={`py-3 flex items-center space-x-2 ${
+                  selectedCategory === 'all' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400 hover:text-white'
                 }`}
-                onClick={() => handleCategoryChange(cat.id)}
+                onClick={() => handleCategoryChange('all')}
               >
-                {cat.name}
+                <FaFolder />
+                <span>Todos</span>
               </button>
-            ))}
+              {categories.map(category => (
+                <button
+                  key={category.id}
+                  className={`py-3 flex items-center space-x-2 ${
+                    selectedCategory === category.id ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400 hover:text-white'
+                  }`}
+                  onClick={() => handleCategoryChange(category.id)}
+                >
+                  <FaFolder />
+                  <span>{category.name}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </nav>
 
-      {/* Contenido principal */}
-      <div className="pt-28 pb-8 px-4 max-w-6xl mx-auto">
-        <AnimatePresence mode="sync">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredMemes.map((meme) => (
-              <motion.div
-                key={meme.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="bg-gray-800 rounded-xl overflow-hidden shadow-lg"
-              >
-                <div className="relative">
-                  <motion.img
-                    src={meme.url}
-                    alt={meme.name || 'Meme'}
-                    className="w-full object-contain h-auto max-h-[calc(100vh-200px)] sm:max-h-80 bg-black"
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.2 }}
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
-                    <h3 className="text-lg font-semibold">
-                      {meme.name || 'Sin descripción'}
-                    </h3>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-blue-400 text-sm">
-                      {meme.category || 'Random'}
-                    </span>
-                    <div className="flex items-center space-x-4">
-                      <button
-                        className="text-red-500 hover:text-red-600 flex items-center"
-                        onClick={() => handleLike(meme.id, meme.likes)}
-                      >
-                        <FaHeart />
-                        <span className="ml-1">{meme.likes || 0}</span>
-                      </button>
-                      <button
-                        className="text-blue-400 hover:text-blue-500"
-                        onClick={() => handleShare(meme.id, meme.url)}
-                      >
-                        <FaShare />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </AnimatePresence>
-      </div>
-
-      <TestUpload />
-
-      {/* Modal: Subir Meme */}
+      {/* MODALES */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            variants={modalVariants}
-            className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4"
-          >
+          <motion.div initial="hidden" animate="visible" exit="exit" variants={modalVariants} className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Subir nuevo meme</h3>
+              <h3 className="text-xl font-bold text-white">Subir nuevo meme</h3>
               <button onClick={() => setShowUploadModal(false)} className="text-gray-400 hover:text-white">
                 <FaTimes />
               </button>
             </div>
             {previewUrl && (
               <div className="mb-4 rounded-lg overflow-hidden">
-                <img src={previewUrl} alt="Preview" className="w-full object-contain max-h-64 bg-black" />
+                <img src={previewUrl} alt="Preview" className="w-full object-contain max-h-64" />
               </div>
             )}
             <input
@@ -430,17 +505,17 @@ function App() {
               placeholder="Título del meme"
               value={newMemeTitle}
               onChange={(e) => setNewMemeTitle(e.target.value)}
-              className="w-full bg-gray-700 rounded-lg px-4 py-2 mb-4"
+              className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 mb-4"
             />
             <select
               value={newMemeCategory}
               onChange={(e) => setNewMemeCategory(e.target.value)}
-              className="w-full bg-gray-700 rounded-lg px-4 py-2 mb-4"
+              className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 mb-4"
             >
               <option value="">Selecciona una categoría</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
+              {categories.map(category => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
                 </option>
               ))}
             </select>
@@ -448,11 +523,7 @@ function App() {
               <button onClick={() => setShowUploadModal(false)} className="px-4 py-2 text-gray-400 hover:text-white">
                 Cancelar
               </button>
-              <button
-                onClick={handleUploadMeme}
-                disabled={!newMemeTitle.trim() || !selectedFile || !newMemeCategory}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
-              >
+              <button onClick={handleUploadMeme} disabled={!newMemeTitle.trim() || !selectedFile || !newMemeCategory} className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition disabled:opacity-50">
                 Publicar
               </button>
             </div>
@@ -460,35 +531,24 @@ function App() {
         </div>
       )}
 
-      {/* Modal: Sobre JoyFinder */}
       {showAboutModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            variants={modalVariants}
-            className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4"
-          >
+          <motion.div initial="hidden" animate="visible" exit="exit" variants={modalVariants} className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Sobre JoyFinder</h3>
+              <h3 className="text-xl font-bold text-white">Sobre JoyFinder</h3>
               <button onClick={() => setShowAboutModal(false)} className="text-gray-400 hover:text-white">
                 <FaTimes />
               </button>
             </div>
-            <div>
+            <div className="text-white">
               <p className="mb-4">
-                JoyFinder es una plataforma dedicada a compartir y disfrutar de memes con humor blanco.
-                Nuestro objetivo es crear un espacio divertido y respetuoso donde todos puedan reír sin ofender.
+                JoyFinder es una plataforma dedicada a compartir y disfrutar de memes con humor blanco. Nuestro objetivo es crear un espacio divertido y respetuoso donde todos puedan reír sin ofender a nadie.
               </p>
               <p className="mb-4">
-                Aquí encontrarás memes de diversas categorías, manteniendo un ambiente positivo y familiar.
+                Aquí podrás encontrar y compartir memes de diferentes categorías, siempre manteniendo un ambiente positivo y familiar.
               </p>
               <div className="flex flex-col items-center gap-4 mt-8">
-                <button
-                  onClick={() => { setShowAboutModal(false); setShowPrivacyModal(true); }}
-                  className="text-blue-400 hover:text-blue-300 flex items-center gap-2"
-                >
+                <button onClick={() => { setShowAboutModal(false); setShowPrivacyModal(true); }} className="text-blue-400 hover:text-blue-300 flex items-center gap-2">
                   <FaShieldAlt />
                   <span>Política de Privacidad</span>
                 </button>
@@ -499,23 +559,16 @@ function App() {
         </div>
       )}
 
-      {/* Modal: Política de Privacidad */}
       {showPrivacyModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            variants={modalVariants}
-            className="bg-gray-800 p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"
-          >
+          <motion.div initial="hidden" animate="visible" exit="exit" variants={modalVariants} className="bg-gray-800 p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Política de Privacidad</h3>
+              <h3 className="text-xl font-bold text-white">Política de Privacidad</h3>
               <button onClick={() => setShowPrivacyModal(false)} className="text-gray-400 hover:text-white">
                 <FaTimes />
               </button>
             </div>
-            <div className="space-y-4">
+            <div className="text-white space-y-4">
               <section>
                 <h4 className="text-lg font-semibold mb-2">1. Información que Recopilamos</h4>
                 <p>En JoyFinder, solo almacenamos la siguiente información:</p>
@@ -563,31 +616,20 @@ function App() {
               </section>
               <section>
                 <h4 className="text-lg font-semibold mb-2">6. Contacto</h4>
-                <p>
-                  Si tienes preguntas sobre nuestra política de privacidad, puedes contactar con nosotros a través de los canales oficiales de JoyFinder.
-                </p>
+                <p>Si tienes preguntas sobre nuestra política de privacidad, puedes contactar con nosotros a través de los canales oficiales de JoyFinder.</p>
               </section>
-              <div className="text-sm text-gray-400 mt-8">
-                Última actualización: {new Date().toLocaleDateString()}
-              </div>
+              <div className="text-sm text-gray-400 mt-8">Última actualización: {new Date().toLocaleDateString()}</div>
             </div>
           </motion.div>
         </div>
       )}
 
-      {/* Modal: Novedades */}
       {showNewsModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            variants={modalVariants}
-            className="bg-gray-800 p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"
-          >
+          <motion.div initial="hidden" animate="visible" exit="exit" variants={modalVariants} className="bg-gray-800 p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h3 className="text-2xl font-bold">Novedades de la Comunidad</h3>
+                <h3 className="text-2xl font-bold text-white">Novedades de la Comunidad</h3>
                 <p className="text-gray-400 text-sm">Mantente al día con las últimas actualizaciones</p>
               </div>
               <button onClick={() => setShowNewsModal(false)} className="text-gray-400 hover:text-white">
@@ -599,24 +641,19 @@ function App() {
                 <div key={update.id} className="bg-gray-700 rounded-lg p-4 space-y-3">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="text-lg font-semibold">{update.title}</h4>
+                      <h4 className="text-lg font-semibold text-white">{update.title}</h4>
                       <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
                         <span>{update.author}</span>
                         <span>•</span>
                         <span>{formatDate(update.date)}</span>
                       </div>
                     </div>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        update.tag === 'Actualización'
-                          ? 'bg-blue-500/20 text-blue-400'
-                          : update.tag === 'En Desarrollo'
-                          ? 'bg-yellow-500/20 text-yellow-400'
-                          : update.tag === 'Mejora'
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-purple-500/20 text-purple-400'
-                      }`}
-                    >
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      update.tag === 'Actualización' ? 'bg-blue-500/20 text-blue-400' :
+                      update.tag === 'En Desarrollo' ? 'bg-yellow-500/20 text-yellow-400' :
+                      update.tag === 'Mejora' ? 'bg-green-500/20 text-green-400' :
+                      'bg-purple-500/20 text-purple-400'
+                    }`}>
                       {update.tag}
                     </span>
                   </div>
@@ -637,11 +674,209 @@ function App() {
           </motion.div>
         </div>
       )}
+
+      {showCollaborateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <motion.div initial="hidden" animate="visible" exit="exit" variants={modalVariants} className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-white">Colabora con Nosotros</h3>
+              <button onClick={() => setShowCollaborateModal(false)} className="text-gray-400 hover:text-white">
+                <FaTimes />
+              </button>
+            </div>
+            <div className="text-white space-y-6">
+              <p>¡Únete a nuestra comunidad y ayúdanos a hacer de JoyFinder un lugar aún mejor! Puedes encontrarnos en:</p>
+              <div className="space-y-4">
+                <a href="https://twitter.com/joyfinder" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-300 hover:text-blue-400 transition-colors">
+                  <FaTwitter className="text-2xl" />
+                  <span>Twitter</span>
+                </a>
+                <a href="https://instagram.com/joyfinder" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-300 hover:text-pink-400 transition-colors">
+                  <FaInstagram className="text-2xl" />
+                  <span>Instagram</span>
+                </a>
+                <a href="https://github.com/joyfinder" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors">
+                  <FaGithub className="text-2xl" />
+                  <span>GitHub</span>
+                </a>
+                <a href="https://discord.gg/joyfinder" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-300 hover:text-purple-400 transition-colors">
+                  <FaDiscord className="text-2xl" />
+                  <span>Discord</span>
+                </a>
+              </div>
+              <div className="mt-6 p-4 bg-gray-700 rounded-lg">
+                <h4 className="font-semibold mb-2">¿Quieres colaborar?</h4>
+                <p className="text-sm text-gray-300">
+                  Si tienes ideas para mejorar JoyFinder o quieres contribuir al desarrollo, únete a nuestro servidor de Discord o contáctanos a través de nuestras redes sociales.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* CONTENIDO PRINCIPAL */}
+      <div className="pt-20 min-h-screen bg-gray-900">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" variants={itemVariants}>
+            <AnimatePresence mode="wait">
+              {filteredMemes.map(meme => (
+                <motion.div
+                  key={meme.id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                  className="bg-gray-800 rounded-xl overflow-hidden shadow-lg"
+                >
+                  <div className="relative">
+                    <motion.img
+                      src={meme.url}
+                      alt={meme.description || 'Meme'}
+                      className="w-full object-contain h-auto max-h-[calc(100vh-150px)] sm:max-h-80"
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.2 }}
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
+                      <h3 className="text-white text-lg font-semibold">{meme.description || 'Sin descripción'}</h3>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-blue-400 text-sm">{meme.category}</span>
+                      <div className="flex items-center space-x-4">
+                        <button className="text-red-500 hover:text-red-600" onClick={() => handleLike(meme.id, meme.likes)}>
+                          <FaHeart />
+                          <span className="ml-1">{meme.likes || 0}</span>
+                        </button>
+                        <button className="text-blue-400 hover:text-blue-500" onClick={() => handleShare(meme.id, meme.url)}>
+                          <FaShare />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        </div>
+      </div>
+
+      <TestUpload />
+
+      <style>{`
+        .app {
+          background: #1a1f2e;
+          min-height: 100vh;
+          padding: 20px;
+        }
+        .meme-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 20px;
+          max-width: 800px;
+          margin: 0 auto;
+        }
+        .meme-card {
+          width: 100%;
+          background: #2a2f3e;
+          border-radius: 10px;
+          overflow: hidden;
+        }
+        .meme-image-container {
+          width: 1200px;
+          margin: 0 auto;
+        }
+        .meme-image-container img {
+          width: 1200px;
+          height: auto;
+          display: block;
+        }
+        .like-button, .share-button {
+          background: none;
+          border: none;
+          color: white;
+          cursor: pointer;
+          padding: 5px 10px;
+          font-size: 1.1em;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          transition: transform 0.1s;
+        }
+        .like-button:hover, .share-button:hover {
+          transform: scale(1.1);
+        }
+        .like-button:active, .share-button:active {
+          transform: scale(0.95);
+        }
+        @media (max-width: 850px) {
+          .meme-grid {
+            max-width: 100%;
+          }
+          .meme-image-container,
+          .meme-image-container img {
+            width: 100%;
+          }
+        }
+        .nav-menu {
+          display: flex;
+          background: #1a1f2e;
+          width: 100%;
+          padding: 15px 5px;
+          overflow-x: scroll !important;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          position: relative;
+          touch-action: pan-x;
+          -webkit-user-select: none;
+          user-select: none;
+          cursor: grab;
+        }
+        .nav-menu:active {
+          cursor: grabbing;
+        }
+        .nav-link {
+          color: #4a90e2;
+          text-decoration: none;
+          padding: 0 15px;
+          white-space: nowrap;
+          font-size: 14px;
+          flex: 0 0 auto;
+          display: inline-block;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .nav-menu::-webkit-scrollbar {
+          display: none;
+          width: 0;
+          height: 0;
+        }
+        @media (max-width: 768px) {
+          .nav-menu {
+            overflow-x: scroll !important;
+            -webkit-overflow-scrolling: touch !important;
+            scroll-behavior: smooth;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            flex-wrap: nowrap;
+            padding: 15px 5px;
+            gap: 0;
+          }
+          .nav-link {
+            padding: 0 10px;
+            font-size: 14px;
+            pointer-events: auto;
+          }
+        }
+      `}</style>
     </motion.div>
   );
 }
 
 export default App;
+
+
 
 
 
