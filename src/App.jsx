@@ -341,12 +341,21 @@ function App() {
             <FaHome className="text-white text-2xl mr-2" />
             <h1 className="text-2xl font-bold text-white">JoyFinder</h1>
           </div>
-          <div className="flex items-center">
-            <button onClick={() => setShowMobileSearch(true)} className="text-white mr-4">
-              <FaSearch />
+          <div className="flex items-center space-x-3">
+            <button onClick={() => setShowNewsModal(true)} className="text-white">
+              <FaBullhorn className="text-xl" />
+            </button>
+            <button onClick={() => setShowAboutModal(true)} className="text-white">
+              <FaInfoCircle className="text-xl" />
+            </button>
+            <button onClick={() => setShowPrivacyModal(true)} className="text-white">
+              <FaShieldAlt className="text-xl" />
+            </button>
+            <button onClick={() => setShowMobileSearch(true)} className="text-white">
+              <FaSearch className="text-xl" />
             </button>
             <button onClick={() => setShowMobileMenu(true)} className="text-white">
-              <FaBars />
+              <FaBars className="text-xl" />
             </button>
           </div>
         </div>
@@ -464,9 +473,7 @@ function App() {
           <div className="max-w-6xl mx-auto px-4">
             <div className="flex space-x-8">
               <button
-                className={`py-3 flex items-center space-x-2 ${
-                  selectedCategory === 'all' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400 hover:text-white'
-                }`}
+                className={`py-3 flex items-center space-x-2 ${selectedCategory === 'all' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400 hover:text-white'}`}
                 onClick={() => handleCategoryChange('all')}
               >
                 <FaFolder />
@@ -475,9 +482,7 @@ function App() {
               {categories.map(category => (
                 <button
                   key={category.id}
-                  className={`py-3 flex items-center space-x-2 ${
-                    selectedCategory === category.id ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400 hover:text-white'
-                  }`}
+                  className={`py-3 flex items-center space-x-2 ${selectedCategory === category.id ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400 hover:text-white'}`}
                   onClick={() => handleCategoryChange(category.id)}
                 >
                   <FaFolder />
