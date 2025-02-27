@@ -80,12 +80,7 @@ function App() {
   const chatEndRef = useRef(null);
 
   // Estados para menú y búsqueda móvil
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
-
-  const [showInfo, setShowInfo] = useState(false);
-  const [showUpdates, setShowUpdates] = useState(false);
-  const [showPrivacy, setShowPrivacy] = useState(false);
 
   useEffect(() => {
     loadMemes();
@@ -264,7 +259,7 @@ function App() {
   };
 
   const handleUploadClick = () => {
-    if (!selectedCategory) {
+    if (!newMemeCategory) {
       alert('Por favor, selecciona una categoría');
       return;
     }
@@ -334,31 +329,15 @@ function App() {
 
   return (
     <motion.div initial="hidden" animate="visible" variants={containerVariants} className="min-h-screen bg-gray-100">
-      {/* MENÚ MÓVIL */}
-      <div className="md:hidden fixed top-0 left-0 right-0 bg-black shadow-lg z-10">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center">
-            <FaHome className="text-white text-2xl mr-2" />
-            <h1 className="text-2xl font-bold text-white">JoyFinder</h1>
-          </div>
-          <div className="flex items-center space-x-3">
-            <button onClick={() => setShowNewsModal(true)} className="text-white">
-              <FaBullhorn className="text-xl" />
-            </button>
-            <button onClick={() => setShowAboutModal(true)} className="text-white">
-              <FaInfoCircle className="text-xl" />
-            </button>
-            <button onClick={() => setShowPrivacyModal(true)} className="text-white">
-              <FaShieldAlt className="text-xl" />
-            </button>
-            <button onClick={() => setShowMobileSearch(true)} className="text-white">
-              <FaSearch className="text-xl" />
-            </button>
-            <button onClick={() => setShowMobileMenu(true)} className="text-white">
-              <FaBars className="text-xl" />
-            </button>
-          </div>
+      {/* HEADER MÓVIL (superior minimalista) */}
+      <div className="md:hidden fixed top-0 left-0 right-0 bg-black shadow-lg z-10 flex items-center justify-between px-4 py-3">
+        <div className="flex items-center">
+          <FaHome className="text-white text-2xl mr-2" />
+          <h1 className="text-xl font-bold text-white">JoyFinder</h1>
         </div>
+        <button onClick={() => setShowMobileSearch(true)} className="text-white">
+          <FaSearch className="text-xl" />
+        </button>
       </div>
 
       {/* BUSCADOR MÓVIL */}
@@ -379,53 +358,12 @@ function App() {
         </div>
       )}
 
-      {/* MENÚ DESPLEGABLE MÓVIL */}
-      {showMobileMenu && (
-        <div className="fixed top-0 left-0 right-0 bg-black p-4 z-20">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-white text-lg">Menú</h2>
-            <button onClick={() => setShowMobileMenu(false)} className="text-white">
-              <FaTimes />
-            </button>
-          </div>
-          <nav>
-            <ul>
-              <li>
-                <button onClick={() => { handleCategoryChange('all'); setShowMobileMenu(false); }} className="text-white py-2 block">
-                  Todos
-                </button>
-              </li>
-              {categories.map(category => (
-                <li key={category.id}>
-                  <button onClick={() => { handleCategoryChange(category.id); setShowMobileMenu(false); }} className="text-white py-2 block">
-                    {category.name}
-                  </button>
-                </li>
-              ))}
-              {/* Opciones adicionales para móvil */}
-              <li>
-                <button onClick={() => { setShowNewsModal(true); setShowMobileMenu(false); }} className="text-white py-2 block">
-                  Novedades
-                </button>
-              </li>
-              <li>
-                <button onClick={() => { setShowAboutModal(true); setShowMobileMenu(false); }} className="text-white py-2 block">
-                  Información
-                </button>
-              </li>
-              <li>
-                <button onClick={() => { setShowPrivacyModal(true); setShowMobileMenu(false); }} className="text-white py-2 block">
-                  Privacidad
-                </button>
-              </li>
-            </ul>
-          </nav>
-        </div>
-      )}
+      {/* MENÚ DESPLEGABLE MÓVIL (opcional, si se requiere menú adicional) */}
+      {/* Puedes conservar o quitar esta sección según tu preferencia */}
 
       {/* MENÚ DE ESCRITORIO */}
-      <nav className="hidden md:block bg-black shadow-lg fixed w-full z-10">
-        <motion.div className="max-w-6xl mx-auto px-4 py-3" variants={itemVariants}>
+      <nav className="hidden md:block fixed w-full z-10">
+        <motion.div className="max-w-6xl mx-auto px-4 py-3 bg-gradient-to-r from-gray-800 to-black" variants={itemVariants}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="flex items-center">
@@ -438,7 +376,7 @@ function App() {
                 <input
                   type="text"
                   placeholder="Buscar memes..."
-                  className="w-96 bg-gray-800 text-white rounded-full px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-96 bg-gray-700 text-white rounded-full px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -446,10 +384,10 @@ function App() {
               </div>
             </div>
             <div className="flex items-center space-x-6">
-              <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowNewsModal(true)}>
+              <button onClick={() => setShowNewsModal(true)} className="text-white hover:text-blue-400 transition-colors">
                 <FaBullhorn className="text-xl" />
               </button>
-              <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowCollaborateModal(true)}>
+              <button onClick={() => setShowCollaborateModal(true)} className="text-white hover:text-blue-400 transition-colors">
                 <FaHandsHelping className="text-xl" />
               </button>
               <input
@@ -459,11 +397,11 @@ function App() {
                 accept="image/*"
                 className="hidden"
               />
-              <button className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" onClick={handleUploadClick}>
-                <span className="upload-icon">{uploading ? '📤' : '⬆️'}</span>
+              <button onClick={handleUploadClick} className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                <span className="upload-icon">{uploading ? '📤' : <FaUpload />}</span>
                 <span className="upload-text">{uploading ? 'Subiendo...' : 'Subir Meme'}</span>
               </button>
-              <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowAboutModal(true)}>
+              <button onClick={() => setShowAboutModal(true)} className="text-white hover:text-blue-400 transition-colors">
                 <FaInfoCircle className="text-xl" />
               </button>
             </div>
@@ -494,9 +432,83 @@ function App() {
         </div>
       </nav>
 
-      {/* MODALES */}
+      {/* NUEVA BARRA DE NAVEGACIÓN MÓVIL (inferior) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-black shadow-inner p-2 flex justify-around z-10">
+        <button onClick={() => handleCategoryChange('all')} className="flex flex-col items-center text-white">
+          <FaHome className="text-2xl" />
+          <span className="text-xs">Inicio</span>
+        </button>
+        <button onClick={() => setShowNewsModal(true)} className="flex flex-col items-center text-white">
+          <FaBullhorn className="text-2xl" />
+          <span className="text-xs">Novedades</span>
+        </button>
+        <button onClick={() => setShowAboutModal(true)} className="flex flex-col items-center text-white">
+          <FaInfoCircle className="text-2xl" />
+          <span className="text-xs">Info</span>
+        </button>
+        <button onClick={() => setShowPrivacyModal(true)} className="flex flex-col items-center text-white">
+          <FaShieldAlt className="text-2xl" />
+          <span className="text-xs">Privacidad</span>
+        </button>
+        <button onClick={handleUploadClick} className="flex flex-col items-center text-white">
+          <FaUpload className="text-2xl" />
+          <span className="text-xs">Subir</span>
+        </button>
+      </nav>
+
+      {/* CONTENIDO PRINCIPAL */}
+      <div className="pt-20 pb-20 md:pt-24 md:pb-8 min-h-screen bg-gray-900">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" variants={itemVariants}>
+            <AnimatePresence mode="wait">
+              {filteredMemes.map(meme => (
+                <motion.div
+                  key={meme.id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                  className="bg-gray-800 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-200"
+                >
+                  <div className="relative">
+                    <motion.img
+                      src={meme.url}
+                      alt={meme.description || 'Meme'}
+                      className="w-full object-contain h-auto max-h-[calc(100vh-150px)] sm:max-h-80"
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.2 }}
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
+                      <h3 className="text-white text-lg font-semibold">{meme.description || 'Sin descripción'}</h3>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-blue-400 text-sm">{meme.category}</span>
+                      <div className="flex items-center space-x-4">
+                        <button className="text-red-500 hover:text-red-600" onClick={() => handleLike(meme.id, meme.likes)}>
+                          <FaHeart />
+                          <span className="ml-1">{meme.likes || 0}</span>
+                        </button>
+                        <button className="text-blue-400 hover:text-blue-500" onClick={() => handleShare(meme.id, meme.url)}>
+                          <FaShare />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        </div>
+      </div>
+
+      <TestUpload />
+
+      {/* MODALES CON FONDO CON DESENFOQUE */}
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <motion.div initial="hidden" animate="visible" exit="exit" variants={modalVariants} className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">Subir nuevo meme</h3>
@@ -541,7 +553,7 @@ function App() {
       )}
 
       {showAboutModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <motion.div initial="hidden" animate="visible" exit="exit" variants={modalVariants} className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">Sobre JoyFinder</h3>
@@ -569,7 +581,7 @@ function App() {
       )}
 
       {showPrivacyModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <motion.div initial="hidden" animate="visible" exit="exit" variants={modalVariants} className="bg-gray-800 p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">Política de Privacidad</h3>
@@ -634,7 +646,7 @@ function App() {
       )}
 
       {showNewsModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <motion.div initial="hidden" animate="visible" exit="exit" variants={modalVariants} className="bg-gray-800 p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <div>
@@ -685,7 +697,7 @@ function App() {
       )}
 
       {showCollaborateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <motion.div initial="hidden" animate="visible" exit="exit" variants={modalVariants} className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">Colabora con Nosotros</h3>
@@ -724,165 +736,11 @@ function App() {
         </div>
       )}
 
-      {/* CONTENIDO PRINCIPAL */}
-      <div className="pt-20 min-h-screen bg-gray-900">
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" variants={itemVariants}>
-            <AnimatePresence mode="wait">
-              {filteredMemes.map(meme => (
-                <motion.div
-                  key={meme.id}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                  className="bg-gray-800 rounded-xl overflow-hidden shadow-lg"
-                >
-                  <div className="relative">
-                    <motion.img
-                      src={meme.url}
-                      alt={meme.description || 'Meme'}
-                      className="w-full object-contain h-auto max-h-[calc(100vh-150px)] sm:max-h-80"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.2 }}
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
-                      <h3 className="text-white text-lg font-semibold">{meme.description || 'Sin descripción'}</h3>
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-blue-400 text-sm">{meme.category}</span>
-                      <div className="flex items-center space-x-4">
-                        <button className="text-red-500 hover:text-red-600" onClick={() => handleLike(meme.id, meme.likes)}>
-                          <FaHeart />
-                          <span className="ml-1">{meme.likes || 0}</span>
-                        </button>
-                        <button className="text-blue-400 hover:text-blue-500" onClick={() => handleShare(meme.id, meme.url)}>
-                          <FaShare />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
-        </div>
-      </div>
-
-      <TestUpload />
-
-      <style>{`
-        .app {
-          background: #1a1f2e;
-          min-height: 100vh;
-          padding: 20px;
-        }
-        .meme-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 20px;
-          max-width: 800px;
-          margin: 0 auto;
-        }
-        .meme-card {
-          width: 100%;
-          background: #2a2f3e;
-          border-radius: 10px;
-          overflow: hidden;
-        }
-        .meme-image-container {
-          width: 1200px;
-          margin: 0 auto;
-        }
-        .meme-image-container img {
-          width: 1200px;
-          height: auto;
-          display: block;
-        }
-        .like-button, .share-button {
-          background: none;
-          border: none;
-          color: white;
-          cursor: pointer;
-          padding: 5px 10px;
-          font-size: 1.1em;
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          transition: transform 0.1s;
-        }
-        .like-button:hover, .share-button:hover {
-          transform: scale(1.1);
-        }
-        .like-button:active, .share-button:active {
-          transform: scale(0.95);
-        }
-        @media (max-width: 850px) {
-          .meme-grid {
-            max-width: 100%;
-          }
-          .meme-image-container,
-          .meme-image-container img {
-            width: 100%;
-          }
-        }
-        .nav-menu {
-          display: flex;
-          background: #1a1f2e;
-          width: 100%;
-          padding: 15px 5px;
-          overflow-x: scroll !important;
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: none;
-          position: relative;
-          touch-action: pan-x;
-          -webkit-user-select: none;
-          user-select: none;
-          cursor: grab;
-        }
-        .nav-menu:active {
-          cursor: grabbing;
-        }
-        .nav-link {
-          color: #4a90e2;
-          text-decoration: none;
-          padding: 0 15px;
-          white-space: nowrap;
-          font-size: 14px;
-          flex: 0 0 auto;
-          display: inline-block;
-          -webkit-tap-highlight-color: transparent;
-        }
-        .nav-menu::-webkit-scrollbar {
-          display: none;
-          width: 0;
-          height: 0;
-        }
-        @media (max-width: 768px) {
-          .nav-menu {
-            overflow-x: scroll !important;
-            -webkit-overflow-scrolling: touch !important;
-            scroll-behavior: smooth;
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-            flex-wrap: nowrap;
-            padding: 15px 5px;
-            gap: 0;
-          }
-          .nav-link {
-            padding: 0 10px;
-            font-size: 14px;
-            pointer-events: auto;
-          }
-        }
-      `}</style>
     </motion.div>
   );
 }
 
 export default App;
+
 
 
