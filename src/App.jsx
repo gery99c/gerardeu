@@ -873,39 +873,6 @@ function App() {
             pointer-events: auto;
           }
         }
-        .modal {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.7);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          z-index: 1000;
-        }
-        .modal-content {
-          background: #2a2f3e;
-          padding: 20px;
-          border-radius: 10px;
-          color: white;
-          width: 90%;
-          max-width: 500px;
-          text-align: center;
-        }
-        .modal-content button {
-          margin-top: 15px;
-          padding: 10px 20px;
-          background: #4a90e2;
-          color: white;
-          border: none;
-          border-radius: 5px;
-          cursor: pointer;
-        }
-        .modal-content button:hover {
-          background: #357abd;
-        }
       `}</style>
     </motion.div>
   );
