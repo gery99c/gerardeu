@@ -373,6 +373,13 @@ function App() {
     }
   };
 
+  const user = supabase.auth.user();
+  if (user) {
+    console.log('Usuario autenticado:', user.id);
+  } else {
+    console.log('No hay usuario autenticado');
+  }
+
   return (
     <motion.div initial="hidden" animate="visible" variants={containerVariants} className="min-h-screen bg-gray-100">
       {/* CABECERA MÓVIL */}
