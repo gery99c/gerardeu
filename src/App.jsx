@@ -331,7 +331,7 @@ function App() {
   return (
     <motion.div initial="hidden" animate="visible" variants={containerVariants} className="min-h-screen bg-gray-100">
       {/* MENÚ MÓVIL */}
-      <div className="md:hidden fixed top-0 left-0 right-0 bg-black shadow-lg z-10">
+      <div className="md:hidden fixed top-0 left-0 right-0 bg-gradient-to-r from-indigo-500 to-purple-600 backdrop-blur-md shadow-xl z-10">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center">
             <FaHome className="text-white text-2xl mr-2" />
@@ -350,12 +350,12 @@ function App() {
 
       {/* BUSCADOR MÓVIL */}
       {showMobileSearch && (
-        <div className="fixed top-0 left-0 right-0 bg-black p-4 z-20">
+        <div className="fixed top-0 left-0 right-0 bg-black/70 backdrop-blur-md p-4 z-20">
           <div className="flex items-center">
             <input
               type="text"
               placeholder="Buscar memes..."
-              className="w-full bg-gray-800 text-white rounded-full px-4 py-2 focus:outline-none"
+              className="w-full bg-gray-800 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -368,7 +368,7 @@ function App() {
 
       {/* MENÚ DESPLEGABLE MÓVIL */}
       {showMobileMenu && (
-        <div className="fixed top-0 left-0 right-0 bg-black p-4 z-20">
+        <div className="fixed top-0 left-0 right-0 bg-black/80 backdrop-blur-md p-4 z-20">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-white text-lg">Menú</h2>
             <button onClick={() => setShowMobileMenu(false)} className="text-white">
