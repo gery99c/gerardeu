@@ -259,8 +259,12 @@ function App() {
     exit: { scale: 0.8, opacity: 0, transition: { duration: 0.2 } }
   };
 
-  // Función original: sin requerir categoría para subir
+  // Función original: Se requiere una categoría antes de subir (igual que en el código original)
   const handleUploadClick = () => {
+    if (!selectedCategory) {
+      alert('Por favor, selecciona una categoría');
+      return;
+    }
     fileInputRef.current?.click();
   };
 
@@ -868,6 +872,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
