@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  FaHeart, FaShare, FaHome, FaSearch, FaHandsHelping, FaUpload, FaTimes, FaFolder, FaInfoCircle, FaShieldAlt,
-  FaBullhorn, FaTwitter, FaInstagram, FaGithub, FaDiscord
+  FaHeart, FaShare, FaHome, FaSearch, 
+  FaHandsHelping, FaUpload, FaTimes, FaFolder, FaInfoCircle, FaShieldAlt,
+  FaBullhorn, FaTwitter, FaInstagram, FaGithub, FaDiscord, FaBars
 } from 'react-icons/fa';
 import TestUpload from './components/TestUpload';
 import { createClient } from '@supabase/supabase-js';
@@ -78,7 +79,8 @@ function App() {
   const [inputMessage, setInputMessage] = useState('');
   const chatEndRef = useRef(null);
 
-  // Estado para el buscador móvil
+  // Estados para menú y búsqueda móvil
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
 
   useEffect(() => {
@@ -257,6 +259,7 @@ function App() {
     exit: { scale: 0.8, opacity: 0, transition: { duration: 0.2 } }
   };
 
+  // En la versión móvil se agrega el botón para subir memes en la cabecera
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
@@ -266,35 +269,21 @@ function App() {
       setUploading(true);
       const file = event.target.files?.[0];
       if (!file) return;
-
       const description = prompt('Introduce una descripción para el meme:') || 'Sin descripción';
-      const category = 'Random'; // Establecer una categoría predeterminada
-
+      const category = prompt('Categoría (Divertidos, Programación, Gaming, Animales, Random):') || 'Random';
       const fileExt = file.name.split('.').pop();
       const fileName = `meme_${Date.now()}.${fileExt}`;
-
       const { error: storageError } = await supabase.storage
         .from('joy-images')
         .upload(fileName, file);
-
       if (storageError) throw storageError;
-
       const { data: { publicUrl } } = supabase.storage
         .from('joy-images')
         .getPublicUrl(fileName);
-
       const { error: dbError } = await supabase
         .from('joy_images')
-        .insert([{
-          url: publicUrl,
-          name: fileName,
-          category: category,
-          description: description,
-          likes: 0
-        }]);
-
+        .insert([{ url: publicUrl, name: fileName, category: category, description: description, likes: 0 }]);
       if (dbError) throw dbError;
-
       await loadMemes();
     } catch (error) {
       console.error('Error:', error);
@@ -338,7 +327,6 @@ function App() {
 
   return (
     <motion.div initial="hidden" animate="visible" variants={containerVariants} className="min-h-screen bg-gray-100">
-      
       {/* CABECERA MÓVIL */}
       <div className="md:hidden fixed top-0 left-0 right-0 bg-gradient-to-r from-indigo-500 to-purple-600 backdrop-blur-md shadow-xl z-10">
         <div className="flex items-center justify-between px-4 py-3">
@@ -394,6 +382,50 @@ function App() {
               <FaTimes />
             </button>
           </div>
+        </div>
+      )}
+
+      {/* MENÚ DESPLEGABLE MÓVIL */}
+      {showMobileMenu && (
+        <div className="fixed top-0 left-0 right-0 bg-black/80 backdrop-blur-md p-4 z-20">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-white text-lg">Menú</h2>
+            <button onClick={() => setShowMobileMenu(false)} className="text-white">
+              <FaTimes />
+            </button>
+          </div>
+          <nav>
+            <ul>
+              <li>
+                <button onClick={() => { handleCategoryChange('all'); setShowMobileMenu(false); }} className="text-white py-2 block">
+                  Todos
+                </button>
+              </li>
+              {categories.map(category => (
+                <li key={category.id}>
+                  <button onClick={() => { handleCategoryChange(category.id); setShowMobileMenu(false); }} className="text-white py-2 block">
+                    {category.name}
+                  </button>
+                </li>
+              ))}
+              {/* Opciones adicionales para móvil */}
+              <li>
+                <button onClick={() => { setShowNewsModal(true); setShowMobileMenu(false); }} className="text-white py-2 block">
+                  Novedades
+                </button>
+              </li>
+              <li>
+                <button onClick={() => { setShowAboutModal(true); setShowMobileMenu(false); }} className="text-white py-2 block">
+                  Información
+                </button>
+              </li>
+              <li>
+                <button onClick={() => { setShowPrivacyModal(true); setShowMobileMenu(false); }} className="text-white py-2 block">
+                  Privacidad
+                </button>
+              </li>
+            </ul>
+          </nav>
         </div>
       )}
 
@@ -858,12 +890,3 @@ function App() {
 }
 
 export default App;
-
-
-
-
-
-
-
-
-
