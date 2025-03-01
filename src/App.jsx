@@ -82,10 +82,6 @@ function App() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [registrationMessage, setRegistrationMessage] = useState('');
-
   useEffect(() => {
     loadMemes();
   }, []);
@@ -316,70 +312,6 @@ function App() {
     }, 1000);
   };
 
-  // Función para registrar un nuevo usuario
-  const registerUser = async () => {
-    const { user, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (error) {
-      console.error('Error al registrar el usuario:', error.message);
-      setRegistrationMessage(`Error: ${error.message}`);
-    } else {
-      console.log('Usuario registrado con ID:', user.id);
-      setRegistrationMessage('Registro exitoso. Por favor, verifica tu correo electrónico.');
-    }
-  };
-
-  // Función para subir memes
-  const handleFileSelected = async (event) => {
-    try {
-      setUploading(true);
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      const description = prompt('Introduce una descripción para el meme:') || 'Sin descripción';
-      const category = 'Random'; // Establecer una categoría predeterminada
-
-      const { data: { publicUrl }, error: storageError } = await supabase.storage
-        .from('joy-images')
-        .upload(`meme_${Date.now()}.${file.name}`, file);
-
-      if (storageError) throw storageError;
-
-      const userId = supabase.auth.user()?.id; // Obtén el user_id del usuario autenticado
-
-      const { error: dbError } = await supabase
-        .from('joy_images')
-        .insert([{
-          url: publicUrl,
-          description,
-          category,
-          user_id: userId, // Almacenar el ID del usuario
-          likes: 0
-        }]);
-
-      if (dbError) throw dbError;
-
-      await loadMemes();
-    } catch (error) {
-      console.error('Error al subir el meme:', error);
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
-
-  const user = supabase.auth.user();
-  if (user) {
-    console.log('Usuario autenticado:', user.id);
-  } else {
-    console.log('No hay usuario autenticado');
-  }
-
   return (
     <motion.div initial="hidden" animate="visible" variants={containerVariants} className="min-h-screen bg-gray-100">
       {/* CABECERA MÓVIL */}
@@ -516,7 +448,7 @@ function App() {
               <input
                 type="file"
                 ref={fileInputRef}
-                onChange={handleFileSelected}
+                onChange={handleFileSelect}
                 accept="image/*"
                 className="hidden"
               />
@@ -943,7 +875,6 @@ function App() {
 }
 
 export default App;
-
 
 
 
