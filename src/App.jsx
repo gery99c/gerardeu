@@ -82,10 +82,6 @@ function App() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
 
-  const [showInfo, setShowInfo] = useState(false);
-  const [showUpdates, setShowUpdates] = useState(false);
-  const [showPrivacy, setShowPrivacy] = useState(false);
-
   useEffect(() => {
     loadMemes();
   }, []);
@@ -724,23 +720,6 @@ function App() {
       {/* CONTENIDO PRINCIPAL */}
       <div className="pt-20 min-h-screen bg-gray-900">
         <div className="max-w-6xl mx-auto px-4 py-8">
-          <header className="header">
-            <h1>JoyFinder</h1>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              style={{ display: 'none' }}
-            />
-            <button
-              className="upload-button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-            >
-              {uploading ? 'Subiendo...' : 'Subir Meme'}
-            </button>
-          </header>
           <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" variants={itemVariants}>
             <AnimatePresence mode="wait">
               {filteredMemes.map(meme => (
@@ -892,58 +871,14 @@ function App() {
             pointer-events: auto;
           }
         }
-        .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          background: #4a90e2;
-          padding: 15px;
-          border-radius: 10px;
-          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-        .upload-button {
-          background: #fff;
-          color: #4a90e2;
-          border: none;
-          padding: 10px 20px;
-          border-radius: 5px;
-          cursor: pointer;
-          transition: background 0.3s;
-        }
-        .upload-button:hover {
-          background: #e0e0e0;
-        }
-        .meme-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 15px;
-          margin-top: 20px;
-        }
-        .meme-card {
-          background: white;
-          border-radius: 10px;
-          overflow: hidden;
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-          transition: transform 0.2s;
-          text-align: center;
-        }
-        .meme-card:hover {
-          transform: scale(1.05);
-        }
-        .meme-image {
-          width: 100%;
-          height: auto;
-        }
-        .meme-title {
-          margin: 10px;
-          font-size: 1.2em;
-          text-align: center;
-        }
       `}</style>
     </motion.div>
   );
 }
 
 export default App;
+
+
+
 
 
