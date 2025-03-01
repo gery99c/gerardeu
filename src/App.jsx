@@ -272,7 +272,7 @@ function App() {
       if (!file) return;
 
       const description = prompt('Introduce una descripción para el meme:') || 'Sin descripción';
-      const category = prompt('Categoría (Divertidos, Programación, Gaming, Animales, Random):') || 'Random';
+      const category = 'Random'; // Establecer una categoría predeterminada
 
       const fileExt = file.name.split('.').pop();
       const fileName = `meme_${Date.now()}.${fileExt}`;
