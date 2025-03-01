@@ -82,6 +82,10 @@ function App() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
 
+  const [showInfo, setShowInfo] = useState(false);
+  const [showUpdates, setShowUpdates] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+
   useEffect(() => {
     loadMemes();
   }, []);
