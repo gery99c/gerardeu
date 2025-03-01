@@ -14,11 +14,11 @@ const supabase = createClient(
 );
 
 const categories = [
-  { id: 'funny', name: 'Divertidos' },
-  { id: 'programming', name: 'Programación' },
-  { id: 'gaming', name: 'Gaming' },
-  { id: 'animals', name: 'Animales' },
-  { id: 'random', name: 'Random' }
+  { id: 'Divertidos', name: 'Divertidos' },
+  { id: 'Programación', name: 'Programación' },
+  { id: 'Gaming', name: 'Gaming' },
+  { id: 'Animales', name: 'Animales' },
+  { id: 'Random', name: 'Random' }
 ];
 
 const newsUpdates = [
