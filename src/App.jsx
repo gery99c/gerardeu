@@ -740,11 +740,9 @@ function App() {
                       whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.2 }}
                     />
-                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
-                      <h3 className="text-white text-lg font-semibold">{meme.description || 'Sin descripción'}</h3>
-                    </div>
                   </div>
                   <div className="p-4">
+                    <h3 className="text-white text-lg font-semibold mb-2">{meme.description || 'Sin descripción'}</h3>
                     <div className="flex justify-between items-center">
                       <span className="text-blue-400 text-sm">{meme.category}</span>
                       <div className="flex items-center space-x-4">
