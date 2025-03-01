@@ -104,8 +104,10 @@ function App() {
     }
   };
 
+  // Se modificó la función para que utilice meme.name o meme.title
   const filteredMemes = memes.filter(meme => {
-    const matchesSearch = meme.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchField = (meme.name || meme.title || '').toLowerCase();
+    const matchesSearch = searchField.includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || meme.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -890,3 +892,4 @@ function App() {
 }
 
 export default App;
+
