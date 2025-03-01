@@ -84,6 +84,7 @@ function App() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [registrationMessage, setRegistrationMessage] = useState('');
 
   useEffect(() => {
     loadMemes();
@@ -143,22 +144,21 @@ function App() {
         setUploading(true);
         const fileExt = selectedFile.name.split('.').pop();
         const fileName = `meme_${Date.now()}.${fileExt}`;
+        const { error: storageError } = await supabase.storage
+          .from('joy-images')
+          .upload(fileName, selectedFile);
+        if (storageError) throw storageError;
         const { data: { publicUrl } } = supabase.storage
           .from('joy-images')
           .getPublicUrl(fileName);
-        const userId = supabase.auth.user()?.id;
         const { error: dbError } = await supabase
           .from('joy_images')
-          .insert([{
-            url: publicUrl,
-            name: fileName,
-            category: newMemeCategory,
-            description: newMemeTitle,
-            user_id: userId,
-            likes: 0
-          }]);
+          .insert([{ url: publicUrl, name: fileName, category: newMemeCategory, description: newMemeTitle, likes: 0 }]);
         if (dbError) throw dbError;
         await loadMemes();
+        // Opcional: agregar localmente el nuevo meme
+        // const newMeme = { id: Date.now(), imageUrl: publicUrl, title: newMemeTitle, category: newMemeCategory, likes: 0 };
+        // setMemes(prev => [...prev, newMeme]);
         setShowUploadModal(false);
         setNewMemeTitle('');
         setNewMemeCategory('');
@@ -316,8 +316,7 @@ function App() {
     }, 1000);
   };
 
-  // Función para registrar un nuevo usuario
-  const registerUser = async (email, password) => {
+  const registerUser = async () => {
     const { user, error } = await supabase.auth.signUp({
       email,
       password,
@@ -325,41 +324,11 @@ function App() {
 
     if (error) {
       console.error('Error al registrar el usuario:', error.message);
-      return null;
+      setRegistrationMessage(`Error: ${error.message}`);
+    } else {
+      console.log('Usuario registrado con ID:', user.id);
+      setRegistrationMessage('Registro exitoso. Por favor, verifica tu correo electrónico.');
     }
-
-    console.log('Usuario registrado con ID:', user.id);
-    return user.id; // Devuelve el user_id
-  };
-
-  const loginUser = async (email, password) => {
-    const { user, error } = await supabase.auth.signIn({
-      email,
-      password,
-    });
-
-    if (error) {
-      console.error('Error al iniciar sesión:', error.message);
-      return null;
-    }
-
-    console.log('Usuario conectado con ID:', user.id);
-    return user.id; // Devuelve el user_id
-  };
-
-  const user = supabase.auth.user();
-  if (user) {
-    console.log('Usuario autenticado:', user.id);
-  } else {
-    console.log('No hay usuario autenticado');
-  }
-
-  const handleRegister = async () => {
-    await registerUser(email, password);
-  };
-
-  const handleLogin = async () => {
-    await loginUser(email, password);
   };
 
   return (
@@ -925,6 +894,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
