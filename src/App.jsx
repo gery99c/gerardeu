@@ -277,29 +277,32 @@ function App() {
       const fileExt = file.name.split('.').pop();
       const fileName = `meme_${Date.now()}.${fileExt}`;
 
+      // Subir el archivo a Supabase
       const { error: storageError } = await supabase.storage
         .from('joy-images')
         .upload(fileName, file);
 
       if (storageError) throw storageError;
 
+      // Obtener la URL pública del archivo subido
       const { data: { publicUrl } } = supabase.storage
         .from('joy-images')
         .getPublicUrl(fileName);
 
+      // Insertar el meme en la base de datos
       const { error: dbError } = await supabase
         .from('joy_images')
         .insert([{
           url: publicUrl,
           name: fileName,
-          category: category,
+          category: category, // Usar la categoría predeterminada
           description: description,
           likes: 0
         }]);
 
       if (dbError) throw dbError;
 
-      await loadMemes();
+      await loadMemes(); // Asegúrate de que esta función esté definida y funcione correctamente
     } catch (error) {
       console.error('Error:', error);
       alert('Error al subir el meme: ' + error.message);
