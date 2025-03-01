@@ -258,10 +258,6 @@ function App() {
   };
 
   const handleUploadClick = () => {
-    if (!newMemeCategory) {
-      alert('Por favor, selecciona una categoría');
-      return;
-    }
     fileInputRef.current?.click();
   };
 
