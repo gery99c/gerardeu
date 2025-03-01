@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  FaHeart, FaShare, FaHome, FaSearch, 
-  FaHandsHelping, FaUpload, FaTimes, FaFolder, FaInfoCircle, FaShieldAlt,
-  FaBullhorn, FaTwitter, FaInstagram, FaGithub, FaDiscord, FaBars
+  FaHeart, FaShare, FaHome, FaSearch, FaHandsHelping, FaUpload, FaTimes, FaFolder, FaInfoCircle, FaShieldAlt,
+  FaBullhorn, FaTwitter, FaInstagram, FaGithub, FaDiscord
 } from 'react-icons/fa';
 import TestUpload from './components/TestUpload';
 import { createClient } from '@supabase/supabase-js';
@@ -79,8 +78,7 @@ function App() {
   const [inputMessage, setInputMessage] = useState('');
   const chatEndRef = useRef(null);
 
-  // Estados para menú y búsqueda móvil
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  // Estado para el buscador móvil
   const [showMobileSearch, setShowMobileSearch] = useState(false);
 
   useEffect(() => {
@@ -259,9 +257,8 @@ function App() {
     exit: { scale: 0.8, opacity: 0, transition: { duration: 0.2 } }
   };
 
-  // Función original: se exige la categoría antes de subir, tal como en tu código
   const handleUploadClick = () => {
-    if (!selectedCategory) {
+    if (!newMemeCategory) {
       alert('Por favor, selecciona una categoría');
       return;
     }
@@ -273,21 +270,35 @@ function App() {
       setUploading(true);
       const file = event.target.files?.[0];
       if (!file) return;
+
       const description = prompt('Introduce una descripción para el meme:') || 'Sin descripción';
       const category = prompt('Categoría (Divertidos, Programación, Gaming, Animales, Random):') || 'Random';
+
       const fileExt = file.name.split('.').pop();
       const fileName = `meme_${Date.now()}.${fileExt}`;
+
       const { error: storageError } = await supabase.storage
         .from('joy-images')
         .upload(fileName, file);
+
       if (storageError) throw storageError;
+
       const { data: { publicUrl } } = supabase.storage
         .from('joy-images')
         .getPublicUrl(fileName);
+
       const { error: dbError } = await supabase
         .from('joy_images')
-        .insert([{ url: publicUrl, name: fileName, category: category, description: description, likes: 0 }]);
+        .insert([{
+          url: publicUrl,
+          name: fileName,
+          category: category,
+          description: description,
+          likes: 0
+        }]);
+
       if (dbError) throw dbError;
+
       await loadMemes();
     } catch (error) {
       console.error('Error:', error);
@@ -331,32 +342,55 @@ function App() {
 
   return (
     <motion.div initial="hidden" animate="visible" variants={containerVariants} className="min-h-screen bg-gray-100">
-      {/* MENÚ MÓVIL */}
-      <div className="md:hidden fixed top-0 left-0 right-0 bg-black shadow-lg z-10">
+      
+      {/* CABECERA MÓVIL */}
+      <div className="md:hidden fixed top-0 left-0 right-0 bg-gradient-to-r from-indigo-500 to-purple-600 backdrop-blur-md shadow-xl z-10">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center">
             <FaHome className="text-white text-2xl mr-2" />
             <h1 className="text-2xl font-bold text-white">JoyFinder</h1>
           </div>
-          <div className="flex items-center">
-            <button onClick={() => setShowMobileSearch(true)} className="text-white mr-4">
+          <div className="flex items-center space-x-4">
+            <button onClick={() => setShowMobileSearch(true)} className="text-white">
               <FaSearch />
             </button>
-            <button onClick={() => setShowMobileMenu(true)} className="text-white">
-              <FaBars />
+            <button onClick={handleUploadClick} className="text-white">
+              <FaUpload />
+            </button>
+            <button onClick={() => setShowNewsModal(true)} className="text-white">
+              <FaBullhorn />
+            </button>
+            <button onClick={() => setShowAboutModal(true)} className="text-white">
+              <FaInfoCircle />
+            </button>
+            <button onClick={() => setShowPrivacyModal(true)} className="text-white">
+              <FaShieldAlt />
             </button>
           </div>
+        </div>
+        {/* Menú de categorías (segunda fila) */}
+        <div className="px-4 py-2 bg-black/50">
+          <nav className="flex space-x-4 overflow-x-auto">
+            <button onClick={() => handleCategoryChange('all')} className={`text-white ${selectedCategory==='all'?'border-b-2 border-blue-400':''}`}>
+              Todos
+            </button>
+            {categories.map(category => (
+              <button key={category.id} onClick={() => handleCategoryChange(category.id)} className={`text-white ${selectedCategory===category.id?'border-b-2 border-blue-400':''}`}>
+                {category.name}
+              </button>
+            ))}
+          </nav>
         </div>
       </div>
 
       {/* BUSCADOR MÓVIL */}
       {showMobileSearch && (
-        <div className="fixed top-0 left-0 right-0 bg-black p-4 z-20">
+        <div className="fixed top-0 left-0 right-0 bg-black/70 backdrop-blur-md p-4 z-20">
           <div className="flex items-center">
             <input
               type="text"
               placeholder="Buscar memes..."
-              className="w-full bg-gray-800 text-white rounded-full px-4 py-2 focus:outline-none"
+              className="w-full bg-gray-800 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -364,50 +398,6 @@ function App() {
               <FaTimes />
             </button>
           </div>
-        </div>
-      )}
-
-      {/* MENÚ DESPLEGABLE MÓVIL */}
-      {showMobileMenu && (
-        <div className="fixed top-0 left-0 right-0 bg-black p-4 z-20">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-white text-lg">Menú</h2>
-            <button onClick={() => setShowMobileMenu(false)} className="text-white">
-              <FaTimes />
-            </button>
-          </div>
-          <nav>
-            <ul>
-              <li>
-                <button onClick={() => { handleCategoryChange('all'); setShowMobileMenu(false); }} className="text-white py-2 block">
-                  Todos
-                </button>
-              </li>
-              {categories.map(category => (
-                <li key={category.id}>
-                  <button onClick={() => { handleCategoryChange(category.id); setShowMobileMenu(false); }} className="text-white py-2 block">
-                    {category.name}
-                  </button>
-                </li>
-              ))}
-              {/* Opciones adicionales para móvil */}
-              <li>
-                <button onClick={() => { setShowNewsModal(true); setShowMobileMenu(false); }} className="text-white py-2 block">
-                  Novedades
-                </button>
-              </li>
-              <li>
-                <button onClick={() => { setShowAboutModal(true); setShowMobileMenu(false); }} className="text-white py-2 block">
-                  Información
-                </button>
-              </li>
-              <li>
-                <button onClick={() => { setShowPrivacyModal(true); setShowMobileMenu(false); }} className="text-white py-2 block">
-                  Privacidad
-                </button>
-              </li>
-            </ul>
-          </nav>
         </div>
       )}
 
@@ -426,7 +416,7 @@ function App() {
                 <input
                   type="text"
                   placeholder="Buscar memes..."
-                  className="w-96 bg-gray-800 text-white rounded-full px-4 py-2 pl-10 focus:outline-none"
+                  className="w-96 bg-gray-800 text-white rounded-full px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
