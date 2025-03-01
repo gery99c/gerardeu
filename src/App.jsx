@@ -72,7 +72,6 @@ function App() {
   const [previewUrl, setPreviewUrl] = useState('');
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState([
     { type: 'bot', text: '¡Hola! Soy JoyBot 😄 ¿Quieres que te cuente un chiste?' }
   ]);
@@ -104,7 +103,7 @@ function App() {
     }
   };
 
-  // Se modificó la función para que utilice meme.name o meme.title
+  // Se usa meme.name o meme.title para evitar el error
   const filteredMemes = memes.filter(meme => {
     const searchField = (meme.name || meme.title || '').toLowerCase();
     const matchesSearch = searchField.includes(searchTerm.toLowerCase());
@@ -120,6 +119,7 @@ function App() {
     }
   }, [filteredMemes, currentIndex]);
 
+  // Al seleccionar un archivo, se guarda el archivo y se genera un preview
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file && file.type.startsWith('image/')) {
@@ -133,24 +133,41 @@ function App() {
     }
   };
 
-  const handleUploadMeme = () => {
+  // Al confirmar en el modal, se sube la imagen a Supabase
+  const handleUploadMeme = async () => {
     if (selectedFile && newMemeTitle.trim() && newMemeCategory) {
-      const newMeme = {
-        id: Date.now(),
-        imageUrl: previewUrl,
-        title: newMemeTitle,
-        category: newMemeCategory,
-        likes: 0
-      };
-      const newMemes = [...memes, newMeme];
-      setMemes(newMemes);
-      setShowUploadModal(false);
-      setNewMemeTitle('');
-      setNewMemeCategory('');
-      setSelectedFile(null);
-      setPreviewUrl('');
-      if (selectedCategory === 'all' || selectedCategory === newMemeCategory) {
-        setCurrentIndex(newMemes.length - 1);
+      try {
+        setUploading(true);
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `meme_${Date.now()}.${fileExt}`;
+        const { error: storageError } = await supabase.storage
+          .from('joy-images')
+          .upload(fileName, selectedFile);
+        if (storageError) throw storageError;
+        const { data: { publicUrl } } = supabase.storage
+          .from('joy-images')
+          .getPublicUrl(fileName);
+        const { error: dbError } = await supabase
+          .from('joy_images')
+          .insert([{ url: publicUrl, name: fileName, category: newMemeCategory, description: newMemeTitle, likes: 0 }]);
+        if (dbError) throw dbError;
+        await loadMemes();
+        // Opcional: agregar localmente el nuevo meme
+        // const newMeme = { id: Date.now(), imageUrl: publicUrl, title: newMemeTitle, category: newMemeCategory, likes: 0 };
+        // setMemes(prev => [...prev, newMeme]);
+        setShowUploadModal(false);
+        setNewMemeTitle('');
+        setNewMemeCategory('');
+        setSelectedFile(null);
+        setPreviewUrl('');
+      } catch (error) {
+        console.error('Error al subir el meme:', error);
+        alert('Error al subir el meme: ' + error.message);
+      } finally {
+        setUploading(false);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       }
     }
   };
@@ -261,44 +278,12 @@ function App() {
     exit: { scale: 0.8, opacity: 0, transition: { duration: 0.2 } }
   };
 
-  // En la versión móvil se agrega el botón para subir memes en la cabecera
+  // En la versión móvil se usa el botón para subir memes en la cabecera
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileSelected = async (event) => {
-    try {
-      setUploading(true);
-      const file = event.target.files?.[0];
-      if (!file) return;
-      const description = prompt('Introduce una descripción para el meme:') || 'Sin descripción';
-      const category = prompt('Categoría (Divertidos, Programación, Gaming, Animales, Random):') || 'Random';
-      const fileExt = file.name.split('.').pop();
-      const fileName = `meme_${Date.now()}.${fileExt}`;
-      const { error: storageError } = await supabase.storage
-        .from('joy-images')
-        .upload(fileName, file);
-      if (storageError) throw storageError;
-      const { data: { publicUrl } } = supabase.storage
-        .from('joy-images')
-        .getPublicUrl(fileName);
-      const { error: dbError } = await supabase
-        .from('joy_images')
-        .insert([{ url: publicUrl, name: fileName, category: category, description: description, likes: 0 }]);
-      if (dbError) throw dbError;
-      await loadMemes();
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error al subir el meme: ' + error.message);
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
-
-  // Función para auto-scroll del chat
+  // Auto-scroll del chat
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -892,4 +877,5 @@ function App() {
 }
 
 export default App;
+
 
