@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FaHeart, FaShare, FaHome, FaSearch, 
   FaHandsHelping, FaUpload, FaTimes, FaFolder, FaInfoCircle, FaShieldAlt,
-  FaBullhorn, FaTwitter, FaInstagram, FaGithub, FaDiscord, FaBars
+  FaBullhorn, FaTwitter, FaInstagram, FaGithub, FaDiscord, FaBars, FaUser
 } from 'react-icons/fa';
 import TestUpload from './components/TestUpload';
 import { createClient } from '@supabase/supabase-js';
@@ -311,7 +311,7 @@ function App() {
   // Funciones de autenticación
   const handleAuth = async () => {
     if (isRegistering) {
-      // Registro de usuario sin requerir verificación
+      // Registro sin requerir verificación
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) {
         alert(error.message);
@@ -392,6 +392,10 @@ function App() {
             </button>
             <button onClick={() => setShowPrivacyModal(true)} className="text-white">
               <FaShieldAlt />
+            </button>
+            {/* Botón de autenticación para móvil */}
+            <button onClick={handleAuthButtonClick} className="text-white">
+              <FaUser />
             </button>
           </div>
         </div>
@@ -515,7 +519,7 @@ function App() {
               <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowAboutModal(true)}>
                 <FaInfoCircle className="text-xl" />
               </button>
-              {/* Botón de autenticación */}
+              {/* Botón de autenticación en escritorio */}
               <button 
                 className="text-white hover:text-blue-400 transition-colors" 
                 onClick={handleAuthButtonClick}
@@ -989,6 +993,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
