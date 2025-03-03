@@ -57,7 +57,7 @@ const newsUpdates = [
 ];
 
 function App() {
-  // Estados relacionados con la aplicación
+  // Estados de la app
   const [memes, setMemes] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
@@ -88,7 +88,7 @@ function App() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [user, setUser] = useState(null);
 
-  // Hook para obtener la sesión actual y suscribirse a cambios en la autenticación
+  // Obtener sesión actual y suscribirse a cambios en la autenticación
   useEffect(() => {
     async function fetchSession() {
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -103,7 +103,6 @@ function App() {
       setUser(session?.user || null);
     });
     return () => {
-      // Usamos listener.subscription.unsubscribe() para cancelar la suscripción
       listener.subscription.unsubscribe();
     };
   }, []);
@@ -168,7 +167,6 @@ function App() {
           .upload(fileName, selectedFile);
         if (storageError) throw storageError;
 
-        // Obtener la URL pública del archivo subido
         const { data: publicUrlData } = supabase.storage
           .from('joy-images')
           .getPublicUrl(fileName);
@@ -310,15 +308,15 @@ function App() {
     exit: { scale: 0.8, opacity: 0, transition: { duration: 0.2 } }
   };
 
-  // Funciones para la autenticación
+  // Funciones de autenticación
   const handleAuth = async () => {
     if (isRegistering) {
-      // Registro de usuario
+      // Registro de usuario sin requerir verificación
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) {
         alert(error.message);
       } else {
-        alert("Revisa tu correo para confirmar tu registro");
+        alert("Te has registrado correctamente");
         setShowAuthModal(false);
       }
     } else {
@@ -603,7 +601,7 @@ function App() {
         </div>
       )}
 
-      {/* MODALES EXISTENTES */}
+      {/* MODAL DE SUBIDA */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <motion.div initial="hidden" animate="visible" exit="exit" variants={modalVariants} className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4">
