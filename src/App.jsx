@@ -57,7 +57,7 @@ const newsUpdates = [
 ];
 
 function App() {
-  // Estados de la app
+  // Estados de la aplicación
   const [memes, setMemes] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
@@ -88,7 +88,7 @@ function App() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [user, setUser] = useState(null);
 
-  // Obtener sesión actual y suscribirse a cambios en la autenticación
+  // Obtener la sesión actual y suscribirse a cambios en la autenticación
   useEffect(() => {
     async function fetchSession() {
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -143,7 +143,13 @@ function App() {
     }
   }, [filteredMemes, currentIndex]);
 
+  // Solo permitir subir memes si el usuario está autenticado
   const handleFileSelect = (event) => {
+    if (!user) {
+      alert("Debes iniciar sesión para subir memes.");
+      setShowAuthModal(true);
+      return;
+    }
     const file = event.target.files[0];
     if (file && file.type.startsWith('image/')) {
       setSelectedFile(file);
@@ -157,6 +163,11 @@ function App() {
   };
 
   const handleUploadMeme = async () => {
+    if (!user) {
+      alert("Debes iniciar sesión para subir memes.");
+      setShowAuthModal(true);
+      return;
+    }
     if (selectedFile && newMemeTitle.trim() && newMemeCategory) {
       try {
         setUploading(true);
@@ -393,9 +404,10 @@ function App() {
             <button onClick={() => setShowPrivacyModal(true)} className="text-white">
               <FaShieldAlt />
             </button>
-            {/* Botón de autenticación para móvil */}
-            <button onClick={handleAuthButtonClick} className="text-white">
+            {/* Botón de autenticación para móvil con texto condicional */}
+            <button onClick={handleAuthButtonClick} className="text-white flex items-center space-x-1">
               <FaUser />
+              <span className="text-sm">{user ? "Cerrar sesión" : "Iniciar sesión"}</span>
             </button>
           </div>
         </div>
@@ -993,6 +1005,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
