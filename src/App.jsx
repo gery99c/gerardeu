@@ -57,7 +57,7 @@ const newsUpdates = [
 ];
 
 function App() {
-  // Estados relacionados con los memes y la app
+  // Estados relacionados con la aplicación
   const [memes, setMemes] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
@@ -88,15 +88,23 @@ function App() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [user, setUser] = useState(null);
 
-  // Listener para autenticación
+  // Hook para obtener la sesión actual y suscribirse a cambios en la autenticación
   useEffect(() => {
-    const session = supabase.auth.session();
-    setUser(session?.user || null);
+    async function fetchSession() {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Error fetching session: ", error);
+      }
+      setUser(session?.user || null);
+    }
+    fetchSession();
+
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user || null);
     });
     return () => {
-      listener?.unsubscribe();
+      // Usamos listener.subscription.unsubscribe() para cancelar la suscripción
+      listener.subscription.unsubscribe();
     };
   }, []);
 
@@ -159,10 +167,13 @@ function App() {
           .from('joy-images')
           .upload(fileName, selectedFile);
         if (storageError) throw storageError;
-        const { data: { publicUrl } } = supabase.storage
+
+        // Obtener la URL pública del archivo subido
+        const { data: publicUrlData } = supabase.storage
           .from('joy-images')
           .getPublicUrl(fileName);
-        // Aquí se puede incluir el user_id para el ranking (user?.id)
+        const publicUrl = publicUrlData.publicUrl;
+
         const { error: dbError } = await supabase
           .from('joy_images')
           .insert([{ 
@@ -174,6 +185,7 @@ function App() {
             user_id: user ? user.id : null 
           }]);
         if (dbError) throw dbError;
+
         await loadMemes();
         setShowUploadModal(false);
         setNewMemeTitle('');
@@ -270,7 +282,7 @@ function App() {
     });
   };
 
-  // Variantes de animación
+  // Variantes de animación para framer-motion
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -310,13 +322,12 @@ function App() {
         setShowAuthModal(false);
       }
     } else {
-      // Inicio de sesión
-      const { error, user: loggedUser } = await supabase.auth.signIn({ email, password });
+      // Inicio de sesión usando signInWithPassword
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         alert(error.message);
       } else {
         setShowAuthModal(false);
-        setUser(loggedUser);
       }
     }
   };
@@ -980,6 +991,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
