@@ -57,6 +57,7 @@ const newsUpdates = [
 ];
 
 function App() {
+  // Estados relacionados con los memes y la app
   const [memes, setMemes] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
@@ -77,10 +78,27 @@ function App() {
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const chatEndRef = useRef(null);
-
-  // Estados para menú y búsqueda móvil
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
+
+  // Estados de autenticación
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [user, setUser] = useState(null);
+
+  // Listener para autenticación
+  useEffect(() => {
+    const session = supabase.auth.session();
+    setUser(session?.user || null);
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+    return () => {
+      listener?.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     loadMemes();
@@ -103,7 +121,6 @@ function App() {
     }
   };
 
-  // Se usa meme.name o meme.title para evitar el error
   const filteredMemes = memes.filter(meme => {
     const searchField = (meme.name || meme.title || '').toLowerCase();
     const matchesSearch = searchField.includes(searchTerm.toLowerCase());
@@ -119,7 +136,6 @@ function App() {
     }
   }, [filteredMemes, currentIndex]);
 
-  // Al seleccionar un archivo, se guarda el archivo y se genera un preview
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file && file.type.startsWith('image/')) {
@@ -133,7 +149,6 @@ function App() {
     }
   };
 
-  // Al confirmar en el modal, se sube la imagen a Supabase
   const handleUploadMeme = async () => {
     if (selectedFile && newMemeTitle.trim() && newMemeCategory) {
       try {
@@ -147,14 +162,19 @@ function App() {
         const { data: { publicUrl } } = supabase.storage
           .from('joy-images')
           .getPublicUrl(fileName);
+        // Aquí se puede incluir el user_id para el ranking (user?.id)
         const { error: dbError } = await supabase
           .from('joy_images')
-          .insert([{ url: publicUrl, name: fileName, category: newMemeCategory, description: newMemeTitle, likes: 0 }]);
+          .insert([{ 
+            url: publicUrl, 
+            name: fileName, 
+            category: newMemeCategory, 
+            description: newMemeTitle, 
+            likes: 0, 
+            user_id: user ? user.id : null 
+          }]);
         if (dbError) throw dbError;
         await loadMemes();
-        // Opcional: agregar localmente el nuevo meme
-        // const newMeme = { id: Date.now(), imageUrl: publicUrl, title: newMemeTitle, category: newMemeCategory, likes: 0 };
-        // setMemes(prev => [...prev, newMeme]);
         setShowUploadModal(false);
         setNewMemeTitle('');
         setNewMemeCategory('');
@@ -278,12 +298,39 @@ function App() {
     exit: { scale: 0.8, opacity: 0, transition: { duration: 0.2 } }
   };
 
-  // En la versión móvil se usa el botón para subir memes en la cabecera
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
+  // Funciones para la autenticación
+  const handleAuth = async () => {
+    if (isRegistering) {
+      // Registro de usuario
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        alert(error.message);
+      } else {
+        alert("Revisa tu correo para confirmar tu registro");
+        setShowAuthModal(false);
+      }
+    } else {
+      // Inicio de sesión
+      const { error, user: loggedUser } = await supabase.auth.signIn({ email, password });
+      if (error) {
+        alert(error.message);
+      } else {
+        setShowAuthModal(false);
+        setUser(loggedUser);
+      }
+    }
   };
 
-  // Auto-scroll del chat
+  const handleAuthButtonClick = async () => {
+    if (!user) {
+      setShowAuthModal(true);
+    } else {
+      await supabase.auth.signOut();
+      setUser(null);
+    }
+  };
+
+  // Funciones para el chat
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -325,7 +372,7 @@ function App() {
             <button onClick={() => setShowMobileSearch(true)} className="text-white">
               <FaSearch />
             </button>
-            <button onClick={handleUploadClick} className="text-white">
+            <button onClick={() => fileInputRef.current?.click()} className="text-white">
               <FaUpload />
             </button>
             <button onClick={() => setShowNewsModal(true)} className="text-white">
@@ -452,12 +499,19 @@ function App() {
                 accept="image/*"
                 className="hidden"
               />
-              <button className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" onClick={handleUploadClick}>
+              <button className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" onClick={() => fileInputRef.current?.click()}>
                 <span className="upload-icon">{uploading ? '📤' : '⬆️'}</span>
                 <span className="upload-text">{uploading ? 'Subiendo...' : 'Subir Meme'}</span>
               </button>
               <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowAboutModal(true)}>
                 <FaInfoCircle className="text-xl" />
+              </button>
+              {/* Botón de autenticación */}
+              <button 
+                className="text-white hover:text-blue-400 transition-colors" 
+                onClick={handleAuthButtonClick}
+              >
+                {user ? "Cerrar sesión" : "Iniciar sesión / Registrarse"}
               </button>
             </div>
           </div>
@@ -487,7 +541,58 @@ function App() {
         </div>
       </nav>
 
-      {/* MODALES */}
+      {/* MODAL DE AUTENTICACIÓN */}
+      {showAuthModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <motion.div 
+            initial="hidden" 
+            animate="visible" 
+            exit="exit" 
+            variants={modalVariants} 
+            className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-white">
+                {isRegistering ? "Registrarse" : "Iniciar Sesión"}
+              </h3>
+              <button onClick={() => setShowAuthModal(false)} className="text-gray-400 hover:text-white">
+                <FaTimes />
+              </button>
+            </div>
+            <input
+              type="email"
+              placeholder="Correo electrónico"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 mb-4"
+            />
+            <input
+              type="password"
+              placeholder="Contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 mb-4"
+            />
+            <button 
+              onClick={handleAuth} 
+              className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition mb-4"
+            >
+              {isRegistering ? "Registrarse" : "Iniciar Sesión"}
+            </button>
+            <div className="text-center text-white">
+              {isRegistering ? "¿Ya tienes una cuenta?" : "¿No tienes cuenta?"}
+              <button 
+                onClick={() => setIsRegistering(!isRegistering)} 
+                className="text-blue-400 ml-2"
+              >
+                {isRegistering ? "Iniciar Sesión" : "Registrarse"}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* MODALES EXISTENTES */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <motion.div initial="hidden" animate="visible" exit="exit" variants={modalVariants} className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4">
