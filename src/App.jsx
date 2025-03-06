@@ -377,6 +377,14 @@ function App() {
 
   return (
     <motion.div initial="hidden" animate="visible" variants={containerVariants} className="min-h-screen bg-gray-100">
+      {/* Input oculto para seleccionar archivos */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleFileSelect}
+      />
+
       {/* CABECERA MÓVIL */}
       <div className="md:hidden fixed top-0 left-0 right-0 bg-gradient-to-r from-indigo-500 to-purple-600 backdrop-blur-md shadow-xl z-10">
         <div className="flex items-center justify-between px-4 py-3">
@@ -388,7 +396,7 @@ function App() {
             <button onClick={() => setShowMobileSearch(true)} className="text-white">
               <FaSearch />
             </button>
-            {/* El botón para subir memes solo se muestra si hay usuario */}
+            {/* Botón para subir memes solo si hay usuario */}
             {user && (
               <button onClick={() => fileInputRef.current?.click()} className="text-white">
                 <FaUpload />
@@ -403,14 +411,12 @@ function App() {
             <button onClick={() => setShowPrivacyModal(true)} className="text-white">
               <FaShieldAlt />
             </button>
-            {/* Botón de autenticación para móvil */}
             <button onClick={handleAuthButtonClick} className="text-white flex items-center space-x-1">
               <FaUser />
               <span className="text-sm">{user ? "Cerrar sesión" : "Iniciar sesión"}</span>
             </button>
           </div>
         </div>
-        {/* Menú de categorías */}
         <div className="px-4 py-2 bg-black/50">
           <nav className="flex space-x-4 overflow-x-auto">
             <button onClick={() => handleCategoryChange('all')} className={`text-white ${selectedCategory==='all'?'border-b-2 border-blue-400':''}`}>
@@ -986,6 +992,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
