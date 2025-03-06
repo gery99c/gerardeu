@@ -81,14 +81,13 @@ function App() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
 
-  // Estados de autenticación
+  // Estados de autenticación (se mantiene la opción pero ya no se requiere para subir memes)
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // Se elimina isRegistering para que solo se permita iniciar sesión
   const [user, setUser] = useState(null);
 
-  // Se establece el título de la pestaña a "JoyFinder"
+  // Establece el título de la pestaña a "JoyFinder"
   useEffect(() => {
     document.title = "JoyFinder";
   }, []);
@@ -148,15 +147,9 @@ function App() {
     }
   }, [filteredMemes, currentIndex]);
 
-  // Permitir subir memes (incluyendo GIF) si el usuario está autenticado
+  // Permitir subir memes (incluyendo GIF) sin necesidad de autenticación
   const handleFileSelect = (event) => {
-    if (!user) {
-      alert("Debes iniciar sesión para subir memes.");
-      setShowAuthModal(true);
-      return;
-    }
     const file = event.target.files[0];
-    // Se permite archivos que sean imágenes o tengan extensión .gif (por si acaso el MIME no se detecta correctamente)
     if (file && (file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.gif'))) {
       setSelectedFile(file);
       const reader = new FileReader();
@@ -171,11 +164,6 @@ function App() {
   };
 
   const handleUploadMeme = async () => {
-    if (!user) {
-      alert("Debes iniciar sesión para subir memes.");
-      setShowAuthModal(true);
-      return;
-    }
     if (selectedFile && newMemeTitle.trim() && newMemeCategory) {
       try {
         setUploading(true);
@@ -199,7 +187,7 @@ function App() {
             category: newMemeCategory, 
             description: newMemeTitle, 
             likes: 0, 
-            user_id: user ? user.id : null 
+            user_id: user ? user.id : null
           }]);
         if (dbError) throw dbError;
 
@@ -327,7 +315,7 @@ function App() {
     exit: { scale: 0.8, opacity: 0, transition: { duration: 0.2 } }
   };
 
-  // Funciones de autenticación: ahora solo se permite iniciar sesión
+  // Funciones de autenticación (opcional, ya que ahora no es requerida para subir memes)
   const handleAuth = async () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
@@ -396,12 +384,10 @@ function App() {
             <button onClick={() => setShowMobileSearch(true)} className="text-white">
               <FaSearch />
             </button>
-            {/* Botón para subir memes solo si hay usuario */}
-            {user && (
-              <button onClick={() => fileInputRef.current?.click()} className="text-white">
-                <FaUpload />
-              </button>
-            )}
+            {/* Botón para subir memes (siempre visible) */}
+            <button onClick={() => fileInputRef.current?.click()} className="text-white">
+              <FaUpload />
+            </button>
             <button onClick={() => setShowNewsModal(true)} className="text-white">
               <FaBullhorn />
             </button>
@@ -521,12 +507,11 @@ function App() {
               <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowCollaborateModal(true)}>
                 <FaHandsHelping className="text-xl" />
               </button>
-              {user && (
-                <button className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" onClick={() => fileInputRef.current?.click()}>
-                  <span className="upload-icon">{uploading ? '📤' : '⬆️'}</span>
-                  <span className="upload-text">{uploading ? 'Subiendo...' : 'Subir Meme'}</span>
-                </button>
-              )}
+              {/* Botón para subir memes (siempre visible) */}
+              <button className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" onClick={() => fileInputRef.current?.click()}>
+                <span className="upload-icon">{uploading ? '📤' : '⬆️'}</span>
+                <span className="upload-text">{uploading ? 'Subiendo...' : 'Subir Meme'}</span>
+              </button>
               <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowAboutModal(true)}>
                 <FaInfoCircle className="text-xl" />
               </button>
@@ -992,6 +977,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
