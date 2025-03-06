@@ -85,8 +85,13 @@ function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isRegistering, setIsRegistering] = useState(false);
+  // Se elimina isRegistering para que solo se permita iniciar sesión
   const [user, setUser] = useState(null);
+
+  // Se establece el título de la pestaña a "JoyFinder"
+  useEffect(() => {
+    document.title = "JoyFinder";
+  }, []);
 
   // Obtener la sesión actual y suscribirse a cambios en la autenticación
   useEffect(() => {
@@ -319,25 +324,13 @@ function App() {
     exit: { scale: 0.8, opacity: 0, transition: { duration: 0.2 } }
   };
 
-  // Funciones de autenticación
+  // Funciones de autenticación: ahora solo se permite iniciar sesión
   const handleAuth = async () => {
-    if (isRegistering) {
-      // Registro sin requerir verificación
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) {
-        alert(error.message);
-      } else {
-        alert("Te has registrado correctamente");
-        setShowAuthModal(false);
-      }
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      alert(error.message);
     } else {
-      // Inicio de sesión usando signInWithPassword
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        alert(error.message);
-      } else {
-        setShowAuthModal(false);
-      }
+      setShowAuthModal(false);
     }
   };
 
@@ -407,14 +400,14 @@ function App() {
             <button onClick={() => setShowPrivacyModal(true)} className="text-white">
               <FaShieldAlt />
             </button>
-            {/* Botón de autenticación para móvil con texto condicional */}
+            {/* Botón de autenticación para móvil */}
             <button onClick={handleAuthButtonClick} className="text-white flex items-center space-x-1">
               <FaUser />
               <span className="text-sm">{user ? "Cerrar sesión" : "Iniciar sesión"}</span>
             </button>
           </div>
         </div>
-        {/* Menú de categorías (segunda fila) */}
+        {/* Menú de categorías */}
         <div className="px-4 py-2 bg-black/50">
           <nav className="flex space-x-4 overflow-x-auto">
             <button onClick={() => handleCategoryChange('all')} className={`text-white ${selectedCategory==='all'?'border-b-2 border-blue-400':''}`}>
@@ -470,7 +463,6 @@ function App() {
                   </button>
                 </li>
               ))}
-              {/* Opciones adicionales para móvil */}
               <li>
                 <button onClick={() => { setShowNewsModal(true); setShowMobileMenu(false); }} className="text-white py-2 block">
                   Novedades
@@ -520,7 +512,6 @@ function App() {
               <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowCollaborateModal(true)}>
                 <FaHandsHelping className="text-xl" />
               </button>
-              {/* Botón de subir meme solo se muestra si el usuario ha iniciado sesión */}
               {user && (
                 <button className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" onClick={() => fileInputRef.current?.click()}>
                   <span className="upload-icon">{uploading ? '📤' : '⬆️'}</span>
@@ -530,12 +521,11 @@ function App() {
               <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowAboutModal(true)}>
                 <FaInfoCircle className="text-xl" />
               </button>
-              {/* Botón de autenticación en escritorio */}
               <button 
                 className="text-white hover:text-blue-400 transition-colors" 
                 onClick={handleAuthButtonClick}
               >
-                {user ? "Cerrar sesión" : "Iniciar sesión / Registrarse"}
+                {user ? "Cerrar sesión" : "Iniciar sesión"}
               </button>
             </div>
           </div>
@@ -576,9 +566,7 @@ function App() {
             className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4"
           >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white">
-                {isRegistering ? "Registrarse" : "Iniciar Sesión"}
-              </h3>
+              <h3 className="text-xl font-bold text-white">Iniciar Sesión</h3>
               <button onClick={() => setShowAuthModal(false)} className="text-gray-400 hover:text-white">
                 <FaTimes />
               </button>
@@ -601,17 +589,9 @@ function App() {
               onClick={handleAuth} 
               className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition mb-4"
             >
-              {isRegistering ? "Registrarse" : "Iniciar Sesión"}
+              Iniciar Sesión
             </button>
-            <div className="text-center text-white">
-              {isRegistering ? "¿Ya tienes una cuenta?" : "¿No tienes cuenta?"}
-              <button 
-                onClick={() => setIsRegistering(!isRegistering)} 
-                className="text-blue-400 ml-2"
-              >
-                {isRegistering ? "Iniciar Sesión" : "Registrarse"}
-              </button>
-            </div>
+            {/* Se ha eliminado la opción para registrarse */}
           </motion.div>
         </div>
       )}
@@ -1004,6 +984,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
