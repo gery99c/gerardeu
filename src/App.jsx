@@ -81,16 +81,12 @@ function App() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
 
-  // Estados de autenticación (se mantiene la opción pero ya no se requiere para subir memes)
+  // Estados de autenticación
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
   const [user, setUser] = useState(null);
-
-  // Establece el título de la pestaña a "JoyFinder"
-  useEffect(() => {
-    document.title = "JoyFinder";
-  }, []);
 
   // Obtener la sesión actual y suscribirse a cambios en la autenticación
   useEffect(() => {
@@ -147,10 +143,15 @@ function App() {
     }
   }, [filteredMemes, currentIndex]);
 
-  // Permitir subir memes (incluyendo GIF) sin necesidad de autenticación
+  // Solo permitir subir memes si el usuario está autenticado
   const handleFileSelect = (event) => {
+    if (!user) {
+      alert("Debes iniciar sesión para subir memes.");
+      setShowAuthModal(true);
+      return;
+    }
     const file = event.target.files[0];
-    if (file && (file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.gif'))) {
+    if (file && file.type.startsWith('image/')) {
       setSelectedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -158,12 +159,15 @@ function App() {
       };
       reader.readAsDataURL(file);
       setShowUploadModal(true);
-    } else {
-      alert("El archivo seleccionado no es una imagen o un GIF.");
     }
   };
 
   const handleUploadMeme = async () => {
+    if (!user) {
+      alert("Debes iniciar sesión para subir memes.");
+      setShowAuthModal(true);
+      return;
+    }
     if (selectedFile && newMemeTitle.trim() && newMemeCategory) {
       try {
         setUploading(true);
@@ -187,7 +191,7 @@ function App() {
             category: newMemeCategory, 
             description: newMemeTitle, 
             likes: 0, 
-            user_id: user ? user.id : null
+            user_id: user ? user.id : null 
           }]);
         if (dbError) throw dbError;
 
@@ -315,13 +319,25 @@ function App() {
     exit: { scale: 0.8, opacity: 0, transition: { duration: 0.2 } }
   };
 
-  // Funciones de autenticación (opcional, ya que ahora no es requerida para subir memes)
+  // Funciones de autenticación
   const handleAuth = async () => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      alert(error.message);
+    if (isRegistering) {
+      // Registro sin requerir verificación
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        alert(error.message);
+      } else {
+        alert("Te has registrado correctamente");
+        setShowAuthModal(false);
+      }
     } else {
-      setShowAuthModal(false);
+      // Inicio de sesión usando signInWithPassword
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        alert(error.message);
+      } else {
+        setShowAuthModal(false);
+      }
     }
   };
 
@@ -365,14 +381,6 @@ function App() {
 
   return (
     <motion.div initial="hidden" animate="visible" variants={containerVariants} className="min-h-screen bg-gray-100">
-      {/* Input oculto para seleccionar archivos */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        style={{ display: 'none' }}
-        onChange={handleFileSelect}
-      />
-
       {/* CABECERA MÓVIL */}
       <div className="md:hidden fixed top-0 left-0 right-0 bg-gradient-to-r from-indigo-500 to-purple-600 backdrop-blur-md shadow-xl z-10">
         <div className="flex items-center justify-between px-4 py-3">
@@ -384,10 +392,12 @@ function App() {
             <button onClick={() => setShowMobileSearch(true)} className="text-white">
               <FaSearch />
             </button>
-            {/* Botón para subir memes (siempre visible) */}
-            <button onClick={() => fileInputRef.current?.click()} className="text-white">
-              <FaUpload />
-            </button>
+            {/* El botón para subir memes solo se muestra si hay usuario */}
+            {user && (
+              <button onClick={() => fileInputRef.current?.click()} className="text-white">
+                <FaUpload />
+              </button>
+            )}
             <button onClick={() => setShowNewsModal(true)} className="text-white">
               <FaBullhorn />
             </button>
@@ -397,12 +407,14 @@ function App() {
             <button onClick={() => setShowPrivacyModal(true)} className="text-white">
               <FaShieldAlt />
             </button>
+            {/* Botón de autenticación para móvil con texto condicional */}
             <button onClick={handleAuthButtonClick} className="text-white flex items-center space-x-1">
               <FaUser />
               <span className="text-sm">{user ? "Cerrar sesión" : "Iniciar sesión"}</span>
             </button>
           </div>
         </div>
+        {/* Menú de categorías (segunda fila) */}
         <div className="px-4 py-2 bg-black/50">
           <nav className="flex space-x-4 overflow-x-auto">
             <button onClick={() => handleCategoryChange('all')} className={`text-white ${selectedCategory==='all'?'border-b-2 border-blue-400':''}`}>
@@ -458,6 +470,7 @@ function App() {
                   </button>
                 </li>
               ))}
+              {/* Opciones adicionales para móvil */}
               <li>
                 <button onClick={() => { setShowNewsModal(true); setShowMobileMenu(false); }} className="text-white py-2 block">
                   Novedades
@@ -507,19 +520,22 @@ function App() {
               <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowCollaborateModal(true)}>
                 <FaHandsHelping className="text-xl" />
               </button>
-              {/* Botón para subir memes (siempre visible) */}
-              <button className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" onClick={() => fileInputRef.current?.click()}>
-                <span className="upload-icon">{uploading ? '📤' : '⬆️'}</span>
-                <span className="upload-text">{uploading ? 'Subiendo...' : 'Subir Meme'}</span>
-              </button>
+              {/* Botón de subir meme solo se muestra si el usuario ha iniciado sesión */}
+              {user && (
+                <button className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" onClick={() => fileInputRef.current?.click()}>
+                  <span className="upload-icon">{uploading ? '📤' : '⬆️'}</span>
+                  <span className="upload-text">{uploading ? 'Subiendo...' : 'Subir Meme'}</span>
+                </button>
+              )}
               <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowAboutModal(true)}>
                 <FaInfoCircle className="text-xl" />
               </button>
+              {/* Botón de autenticación en escritorio */}
               <button 
                 className="text-white hover:text-blue-400 transition-colors" 
                 onClick={handleAuthButtonClick}
               >
-                {user ? "Cerrar sesión" : "Iniciar sesión"}
+                {user ? "Cerrar sesión" : "Iniciar sesión / Registrarse"}
               </button>
             </div>
           </div>
@@ -560,7 +576,9 @@ function App() {
             className="bg-gray-800 p-6 rounded-xl max-w-md w-full mx-4"
           >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white">Iniciar Sesión</h3>
+              <h3 className="text-xl font-bold text-white">
+                {isRegistering ? "Registrarse" : "Iniciar Sesión"}
+              </h3>
               <button onClick={() => setShowAuthModal(false)} className="text-gray-400 hover:text-white">
                 <FaTimes />
               </button>
@@ -583,8 +601,17 @@ function App() {
               onClick={handleAuth} 
               className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition mb-4"
             >
-              Iniciar Sesión
+              {isRegistering ? "Registrarse" : "Iniciar Sesión"}
             </button>
+            <div className="text-center text-white">
+              {isRegistering ? "¿Ya tienes una cuenta?" : "¿No tienes cuenta?"}
+              <button 
+                onClick={() => setIsRegistering(!isRegistering)} 
+                className="text-blue-400 ml-2"
+              >
+                {isRegistering ? "Iniciar Sesión" : "Registrarse"}
+              </button>
+            </div>
           </motion.div>
         </div>
       )}
@@ -977,6 +1004,14 @@ function App() {
 }
 
 export default App;
+
+
+
+
+
+
+
+
 
 
 
