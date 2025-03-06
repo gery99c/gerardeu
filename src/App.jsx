@@ -392,12 +392,9 @@ function App() {
             <button onClick={() => setShowMobileSearch(true)} className="text-white">
               <FaSearch />
             </button>
-            {/* El botón para subir memes solo se muestra si hay usuario */}
-            {user && (
-              <button onClick={() => fileInputRef.current?.click()} className="text-white">
-                <FaUpload />
-              </button>
-            )}
+            <button onClick={() => fileInputRef.current?.click()} className="text-white">
+              <FaUpload />
+            </button>
             <button onClick={() => setShowNewsModal(true)} className="text-white">
               <FaBullhorn />
             </button>
@@ -520,13 +517,17 @@ function App() {
               <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowCollaborateModal(true)}>
                 <FaHandsHelping className="text-xl" />
               </button>
-              {/* Botón de subir meme solo se muestra si el usuario ha iniciado sesión */}
-              {user && (
-                <button className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" onClick={() => fileInputRef.current?.click()}>
-                  <span className="upload-icon">{uploading ? '📤' : '⬆️'}</span>
-                  <span className="upload-text">{uploading ? 'Subiendo...' : 'Subir Meme'}</span>
-                </button>
-              )}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                accept="image/*"
+                className="hidden"
+              />
+              <button className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" onClick={() => fileInputRef.current?.click()}>
+                <span className="upload-icon">{uploading ? '📤' : '⬆️'}</span>
+                <span className="upload-text">{uploading ? 'Subiendo...' : 'Subir Meme'}</span>
+              </button>
               <button className="text-white hover:text-blue-400 transition-colors" onClick={() => setShowAboutModal(true)}>
                 <FaInfoCircle className="text-xl" />
               </button>
@@ -1004,6 +1005,14 @@ function App() {
 }
 
 export default App;
+
+
+
+
+
+
+
+
 
 
 
