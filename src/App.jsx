@@ -148,7 +148,7 @@ function App() {
     }
   }, [filteredMemes, currentIndex]);
 
-  // Solo permitir subir memes si el usuario está autenticado
+  // Permitir subir memes (incluyendo GIF) si el usuario está autenticado
   const handleFileSelect = (event) => {
     if (!user) {
       alert("Debes iniciar sesión para subir memes.");
@@ -156,7 +156,8 @@ function App() {
       return;
     }
     const file = event.target.files[0];
-    if (file && file.type.startsWith('image/')) {
+    // Se permite archivos que sean imágenes o tengan extensión .gif (por si acaso el MIME no se detecta correctamente)
+    if (file && (file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.gif'))) {
       setSelectedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -164,6 +165,8 @@ function App() {
       };
       reader.readAsDataURL(file);
       setShowUploadModal(true);
+    } else {
+      alert("El archivo seleccionado no es una imagen o un GIF.");
     }
   };
 
@@ -591,7 +594,6 @@ function App() {
             >
               Iniciar Sesión
             </button>
-            {/* Se ha eliminado la opción para registrarse */}
           </motion.div>
         </div>
       )}
