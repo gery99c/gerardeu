@@ -844,7 +844,7 @@ function App() {
                     />
                   </div>
                   <div className="p-4">
-                    <h3 className="text-white text-lg font-semibold mb-2">{meme.description || 'Sin descripción'}</h3>
+                    <h3 className="text-white text-lg font-semibold mb-2">{meme.description || ''}</h3>
                     <div className="flex justify-between items-center">
                       <span className="text-blue-400 text-sm">{meme.category}</span>
                       <div className="flex items-center space-x-4">
@@ -977,42 +977,3 @@ function App() {
 }
 
 export default App;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
