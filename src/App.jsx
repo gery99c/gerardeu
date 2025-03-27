@@ -824,42 +824,58 @@ function App() {
         <div className="max-w-6xl mx-auto px-4 py-8">
           <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" variants={itemVariants}>
             <AnimatePresence mode="wait">
-              {filteredMemes.map(meme => (
-                <motion.div
-                  key={meme.id}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                  className="bg-gray-800 rounded-xl overflow-hidden shadow-lg"
-                >
-                  <div className="relative">
-                    <motion.img
-                      src={meme.url}
-                      alt={meme.description || 'Meme'}
-                      className="w-full object-contain h-auto max-h-[calc(100vh-150px)] sm:max-h-80"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.2 }}
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-white text-lg font-semibold mb-2">{meme.description || ''}</h3>
-                    <div className="flex justify-between items-center">
-                      <span className="text-blue-400 text-sm">{meme.category}</span>
-                      <div className="flex items-center space-x-4">
-                        <button className="text-red-500 hover:text-red-600" onClick={() => handleLike(meme.id, meme.likes)}>
-                          <FaHeart />
-                          <span className="ml-1">{meme.likes || 0}</span>
-                        </button>
-                        <button className="text-blue-400 hover:text-blue-500" onClick={() => handleShare(meme.id, meme.url)}>
-                          <FaShare />
-                        </button>
+              {filteredMemes.map(meme => {
+                // Si description existe y no es exactamente "Sin descripción", la mostramos. Si no, mostramos cadena vacía.
+                const displayDescription = 
+                  meme.description && meme.description.toLowerCase() !== 'sin descripción'
+                    ? meme.description
+                    : '';
+
+                return (
+                  <motion.div
+                    key={meme.id}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                    className="bg-gray-800 rounded-xl overflow-hidden shadow-lg"
+                  >
+                    <div className="relative">
+                      <motion.img
+                        src={meme.url}
+                        alt={meme.description || 'Meme'}
+                        className="w-full object-contain h-auto max-h-[calc(100vh-150px)] sm:max-h-80"
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ duration: 0.2 }}
+                      />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="text-white text-lg font-semibold mb-2">
+                        {displayDescription}
+                      </h3>
+                      <div className="flex justify-between items-center">
+                        <span className="text-blue-400 text-sm">{meme.category}</span>
+                        <div className="flex items-center space-x-4">
+                          <button
+                            className="text-red-500 hover:text-red-600"
+                            onClick={() => handleLike(meme.id, meme.likes)}
+                          >
+                            <FaHeart />
+                            <span className="ml-1">{meme.likes || 0}</span>
+                          </button>
+                          <button
+                            className="text-blue-400 hover:text-blue-500"
+                            onClick={() => handleShare(meme.id, meme.url)}
+                          >
+                            <FaShare />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
           </motion.div>
         </div>
@@ -977,3 +993,4 @@ function App() {
 }
 
 export default App;
+
